@@ -1,0 +1,181 @@
+@model QuizBattle.AdminPanel.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "داشبورد";
+}
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card h-100 position-relative overflow-hidden">
+            <div class="card-body">
+                <h6 class="text-white-50">کل کاربران</h6>
+                <h2 class="mb-0">@Model.TotalUsers.ToString("N0")</h2>
+                <small class="text-white-50">+@Model.NewUsersThisWeek این هفته</small>
+            </div>
+            <i class="bi bi-people stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card green h-100 position-relative overflow-hidden">
+            <div class="card-body">
+                <h6 class="text-white-50">کل سوالات</h6>
+                <h2 class="mb-0">@Model.TotalQuestions.ToString("N0")</h2>
+                <small class="text-white-50">در @Model.TotalCategories دسته</small>
+            </div>
+            <i class="bi bi-question-circle stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card orange h-100 position-relative overflow-hidden">
+            <div class="card-body">
+                <h6 class="text-white-50">کل بازی‌ها</h6>
+                <h2 class="mb-0">@Model.TotalGames.ToString("N0")</h2>
+                <small class="text-white-50">@Model.TodaysGames بازی امروز</small>
+            </div>
+            <i class="bi bi-controller stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card red h-100 position-relative overflow-hidden">
+            <div class="card-body">
+                <h6 class="text-white-50">بازی‌های فعال</h6>
+                <h2 class="mb-0">@Model.ActiveGames</h2>
+                <small class="text-white-50">@Model.ReportedQuestions سوال گزارش شده</small>
+            </div>
+            <i class="bi bi-activity stat-icon"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Games Chart -->
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>نمودار بازی‌ها (۷ روز اخیر)</span>
+            </div>
+            <div class="card-body">
+                <canvas id="gamesChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Users -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-trophy me-2 text-warning"></i>برترین کاربران
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var user in Model.TopUsers)
+                    {
+                        <li class="list-group-item d-flex align-items-center">
+                            <span class="badge bg-primary rounded-pill me-2">@(Model.TopUsers.IndexOf(user) + 1)</span>
+                            <img src="@(string.IsNullOrEmpty(user.AvatarUrl) ? "https://api.dicebear.com/7.x/avataaars/svg?seed=" + user.Username : user.AvatarUrl)" 
+                                 class="rounded-circle me-2" width="32" height="32" alt="">
+                            <div class="flex-grow-1">
+                                <strong>@user.Username</strong>
+                                <small class="text-muted d-block">@user.TotalWins برد از @user.TotalGames بازی</small>
+                            </div>
+                            <span class="text-warning">🪙 @user.Coins.ToString("N0")</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <!-- Recent Games -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history me-2"></i>آخرین بازی‌ها</span>
+                <a href="#" class="btn btn-sm btn-outline-primary">مشاهده همه</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>بازیکن ۱</th>
+                                <th>بازیکن ۲</th>
+                                <th>امتیاز</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var game in Model.RecentGames)
+                            {
+                                <tr>
+                                    <td>@game.Id</td>
+                                    <td>
+                                        <strong class="@(game.Player1Score > game.Player2Score ? "text-success" : "")">
+                                            @game.Player1Name
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <strong class="@(game.Player2Score > game.Player1Score ? "text-success" : "")">
+                                            @game.Player2Name
+                                        </strong>
+                                    </td>
+                                    <td>@game.Player1Score - @game.Player2Score</td>
+                                    <td>
+                                        @switch (game.Status)
+                                        {
+                                            case QuizBattle.Domain.Enums.GameStatus.Completed:
+                                                <span class="badge bg-success">پایان یافته</span>
+                                                break;
+                                            case QuizBattle.Domain.Enums.GameStatus.InProgress:
+                                                <span class="badge bg-warning">در حال انجام</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary">@game.Status</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>@game.CreatedAt.ToString("yyyy/MM/dd HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const ctx = document.getElementById('gamesChart').getContext('2d');
+        const data = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.GamesPerDay));
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    label: 'تعداد بازی',
+                    data: Object.values(data),
+                    borderColor: '#6C63FF',
+                    backgroundColor: 'rgba(108, 99, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    </script>
+}

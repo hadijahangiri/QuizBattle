@@ -1,0 +1,104 @@
+@model QuizBattle.AdminPanel.Models.CreateQuestionViewModel
+@{
+    ViewData["Title"] = "سوال جدید";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-plus-lg me-2"></i>افزودن سوال جدید
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Text" class="form-label"></label>
+                        <textarea asp-for="Text" class="form-control" rows="3" placeholder="متن سوال را وارد کنید..."></textarea>
+                        <span asp-validation-for="Text" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ImageUrl" class="form-label"></label>
+                        <input asp-for="ImageUrl" class="form-control" placeholder="آدرس تصویر (اختیاری)" />
+                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" class="form-select">
+                            <option value="">انتخاب دسته‌بندی...</option>
+                            @foreach (var category in Model.Categories!)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+
+                    <hr class="my-4">
+                    <h6 class="mb-3">گزینه‌ها</h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <input type="radio" name="CorrectOptionIndex" value="1" class="form-check-input mt-0">
+                                </span>
+                                <input asp-for="Option1" class="form-control" placeholder="گزینه ۱" />
+                            </div>
+                            <span asp-validation-for="Option1" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <input type="radio" name="CorrectOptionIndex" value="2" class="form-check-input mt-0">
+                                </span>
+                                <input asp-for="Option2" class="form-control" placeholder="گزینه ۲" />
+                            </div>
+                            <span asp-validation-for="Option2" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <input type="radio" name="CorrectOptionIndex" value="3" class="form-check-input mt-0">
+                                </span>
+                                <input asp-for="Option3" class="form-control" placeholder="گزینه ۳" />
+                            </div>
+                            <span asp-validation-for="Option3" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <input type="radio" name="CorrectOptionIndex" value="4" class="form-check-input mt-0">
+                                </span>
+                                <input asp-for="Option4" class="form-control" placeholder="گزینه ۴" />
+                            </div>
+                            <span asp-validation-for="Option4" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        <i class="bi bi-info-circle me-1"></i>گزینه صحیح را با کلیک روی دکمه رادیویی مشخص کنید
+                    </small>
+                    <span asp-validation-for="CorrectOptionIndex" class="text-danger"></span>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-right me-1"></i>بازگشت
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>ذخیره سوال
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

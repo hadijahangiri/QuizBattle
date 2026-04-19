@@ -1,0 +1,288 @@
+@page "/onboarding"
+@inject HttpClient Http
+@inject AppState AppState
+@inject NavigationManager Navigation
+
+<div class="onboarding-container">
+    <div class="onboarding-header">
+        <div class="logo">
+            <span class="logo-icon">🎯</span>
+            <span class="logo-text">کوییز باتل</span>
+        </div>
+        <p class="subtitle">بازی سوال و جواب آنلاین</p>
+    </div>
+
+    @if (currentStep == 1)
+    {
+        <div class="step step-contact">
+            <h3>ثبت نام</h3>
+            <p class="hint">اگر می‌خواهید پیشرفت شما ذخیره شود، می‌توانید ایمیل یا شماره موبایل وارد کنید.</p>
+
+            <div class="contact-inputs">
+                <div class="input-group">
+                    <label>📧 ایمیل</label>
+                    <input type="email" @bind="email" placeholder="example@email.com" />
+                </div>
+
+                <div class="divider">یا</div>
+
+                <div class="input-group">
+                    <label>📱 شماره موبایل</label>
+                    <input type="tel" @bind="phoneNumber" placeholder="09123456789" dir="ltr" />
+                </div>
+            </div>
+
+            <div class="buttons-vertical">
+                <button class="btn btn-primary btn-large" @onclick="GoToStep2">
+                    ادامه ➜
+                </button>
+
+                <button class="btn btn-ghost" @onclick="GoToStep2">
+                    ادامه بدون ثبت نام
+                </button>
+            </div>
+        </div>
+    }
+    else if (currentStep == 2)
+    {
+        <div class="step step-avatar">
+            <h3>آواتار و نام خود را انتخاب کنید</h3>
+            
+            <div class="avatar-grid">
+                @foreach (var avatar in avatars)
+                {
+                    <div class="avatar-item @(selectedAvatar == avatar.Emoji ? "selected" : "")"
+                         style="background-color: @avatar.Color"
+                         @onclick="@(() => SelectAvatar(avatar.Emoji))">
+                        <span class="avatar-emoji">@avatar.Emoji</span>
+                    </div>
+                }
+            </div>
+
+            <div class="name-input">
+                <input type="text" @bind="username" @bind:event="oninput" placeholder="نام کاربری (مثال: علی۱۲۳)" maxlength="20" />
+            </div>
+
+            <button class="btn btn-primary btn-large" @onclick="FinishOnboarding" disabled="@(string.IsNullOrEmpty(username) || string.IsNullOrEmpty(selectedAvatar))">
+                ثبت و ادامه
+            </button>
+        </div>
+    }
+    else if (currentStep == 3)
+    {
+        <Tutorial OnComplete="CompleteTutorial" />
+    }
+
+    @if (isLoading)
+    {
+        <div class="loading-overlay">
+            <div class="loading-card">
+                <div class="spinner"></div>
+                <h3>در حال آماده‌سازی...</h3>
+                <p>لطفاً چند ثانیه صبر کنید.</p>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="error-message">@errorMessage</div>
+    }
+</div>
+
+@code {
+    private int currentStep = 1;
+    private string username = "";
+    private string selectedAvatar = "";
+    private string email = "";
+    private string phoneNumber = "";
+    private bool isLoading = false;
+    private string errorMessage = "";
+
+    // Using human emoji avatars
+    private List<AvatarItem> avatars = new()
+    {
+        new("👨", "#3498DB"),
+        new("👩", "#E91E63"),
+        new("🧑", "#9C27B0"),
+        new("👦", "#4CAF50"),
+        new("👧", "#FF9800"),
+        new("🧔", "#795548"),
+        new("👱‍♂️", "#607D8B"),
+        new("👱‍♀️", "#2196F3"),
+        new("👩‍🦱", "#FFC107"),
+        new("👨‍🦳", "#FF5722"),
+        new("👩‍🦰", "#8BC34A"),
+        new("🧑‍🦳", "#00BCD4")
+    };
+
+    private record AvatarItem(string Emoji, string Color);
+
+    private void SelectAvatar(string avatar)
+    {
+        selectedAvatar = avatar;
+    }
+
+    private void GoToStep2()
+    {
+        if (HasSelectedProfile())
+        {
+            currentStep = 3;
+            return;
+        }
+
+        currentStep = 2;
+    }
+
+    private async Task FinishOnboarding()
+    {
+        if (!string.IsNullOrEmpty(email) || !string.IsNullOrEmpty(phoneNumber))
+        {
+            await CreateUser(email, phoneNumber);
+        }
+        else
+        {
+            await CreateGuestUser();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (HasSelectedProfile())
+        {
+            selectedAvatar = AppState.AvatarUrl ?? string.Empty;
+            username = AppState.Username;
+            currentStep = 3;
+        }
+    }
+
+    private bool HasSelectedProfile()
+    {
+        return !string.IsNullOrWhiteSpace(AppState.Username)
+            && AppState.Username != "کاربر QuizBattle"
+            && !string.IsNullOrWhiteSpace(AppState.AvatarUrl)
+            && AppState.AvatarUrl != "icon-192.png";
+    }
+
+    private async Task CreateGuestUser()
+    {
+        isLoading = true;
+        errorMessage = "";
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("auth/guest", new
+            {
+                Username = username,
+                AvatarUrl = selectedAvatar
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<AuthResultDto>();
+                if (result != null)
+                {
+                    UpdateAppStateFromAuth(result);
+                    currentStep = 3;
+                }
+            }
+            else
+            {
+                errorMessage = "خطا در ایجاد کاربر";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"خطا: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateUser(string? email, string? phone)
+    {
+        isLoading = true;
+        errorMessage = "";
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("users/register", new
+            {
+                Username = username,
+                AvatarUrl = selectedAvatar,
+                Email = email,
+                PhoneNumber = phone
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                var user = await response.Content.ReadFromJsonAsync<UserDto>();
+                if (user != null)
+                {
+                    UpdateAppState(user);
+                    currentStep = 3;
+                }
+            }
+            else
+            {
+                errorMessage = "خطا در ایجاد کاربر";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"خطا: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void UpdateAppState(UserDto user)
+    {
+        AppState.CurrentUserId = user.Id;
+        AppState.Username = user.Username;
+        AppState.AvatarUrl = user.AvatarUrl;
+        AppState.Coins = user.Coins;
+        AppState.IsGuest = user.IsGuest;
+        AppState.HasCompletedTutorial = user.HasCompletedTutorial;
+        AppState.NotifyStateChanged();
+    }
+
+    private void UpdateAppStateFromAuth(AuthResultDto result)
+    {
+        AppState.CurrentUserId = result.UserId;
+        AppState.Username = result.Username;
+        AppState.AvatarUrl = result.AvatarUrl;
+        AppState.AuthToken = result.Token;
+        AppState.IsGuest = true;
+        AppState.Coins = 100; // سکه پیش‌فرض
+        AppState.NotifyStateChanged();
+    }
+
+    private void CompleteTutorial()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    public record UserDto(
+        Guid Id,
+        string Username,
+        string? Email,
+        string? PhoneNumber,
+        string AvatarUrl,
+        bool IsGuest,
+        int Coins,
+        int Score,
+        int TotalWins,
+        int TotalLosses,
+        int TotalDraws,
+        int Level,
+        int CurrentStreak,
+        bool HasCompletedTutorial
+    );
+
+    public record AuthResultDto(Guid UserId, string Username, string AvatarUrl, string Token);
+}

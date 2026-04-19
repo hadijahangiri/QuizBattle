@@ -1,0 +1,113 @@
+@model QuizBattle.AdminPanel.Models.EditQuestionViewModel
+@{
+    ViewData["Title"] = "ویرایش سوال";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pencil me-2"></i>ویرایش سوال #@Model.Id
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Text" class="form-label"></label>
+                        <textarea asp-for="Text" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Text" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ImageUrl" class="form-label"></label>
+                        <input asp-for="ImageUrl" class="form-control" />
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <img src="@Model.ImageUrl" class="mt-2 rounded" style="max-height: 100px;">
+                        }
+                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" class="form-select">
+                            @foreach (var category in Model.Categories!)
+                            {
+                                <option value="@category.Id" selected="@(category.Id == Model.CategoryId)">@category.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+
+                    <hr class="my-4">
+                    <h6 class="mb-3">گزینه‌ها</h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <input type="radio" name="CorrectOptionIndex" value="1" 
+                                           class="form-check-input mt-0" @(Model.CorrectOptionIndex == 1 ? "checked" : "")>
+                                </span>
+                                <input asp-for="Option1" class="form-control" />
+                            </div>
+                            <span asp-validation-for="Option1" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <input type="radio" name="CorrectOptionIndex" value="2" 
+                                           class="form-check-input mt-0" @(Model.CorrectOptionIndex == 2 ? "checked" : "")>
+                                </span>
+                                <input asp-for="Option2" class="form-control" />
+                            </div>
+                            <span asp-validation-for="Option2" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <input type="radio" name="CorrectOptionIndex" value="3" 
+                                           class="form-check-input mt-0" @(Model.CorrectOptionIndex == 3 ? "checked" : "")>
+                                </span>
+                                <input asp-for="Option3" class="form-control" />
+                            </div>
+                            <span asp-validation-for="Option3" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <input type="radio" name="CorrectOptionIndex" value="4" 
+                                           class="form-check-input mt-0" @(Model.CorrectOptionIndex == 4 ? "checked" : "")>
+                                </span>
+                                <input asp-for="Option4" class="form-control" />
+                            </div>
+                            <span asp-validation-for="Option4" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="form-check form-switch mb-4">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch">
+                        <label asp-for="IsActive" class="form-check-label">سوال فعال باشد</label>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-right me-1"></i>بازگشت
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>ذخیره تغییرات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

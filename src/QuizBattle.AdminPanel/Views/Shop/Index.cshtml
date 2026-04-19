@@ -1,0 +1,112 @@
+@model QuizBattle.AdminPanel.Models.StoreListViewModel
+@{
+    ViewData["Title"] = "فروشگاه";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">فروشگاه سکه</h4>
+        <small class="text-muted">مدیریت بسته‌های سکه قابل خرید</small>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> افزودن بسته جدید
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    @if (Model.Items.Count == 0)
+    {
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-coin display-1 text-muted mb-3"></i>
+                    <h5>هنوز بسته سکه‌ای وجود ندارد</h5>
+                    <p class="text-muted">اولین بسته سکه را ایجاد کنید</p>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> افزودن بسته جدید
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @foreach (var item in Model.Items)
+        {
+            <div class="col-md-6 col-lg-4 col-xl-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        @if (item.IsPopular)
+                        {
+                            <span class="badge bg-danger position-absolute top-0 end-0 m-2">محبوب</span>
+                        }
+                        
+                        <div class="my-3">
+                            <span style="font-size: 3rem;">🪙</span>
+                        </div>
+                        
+                        <h5 class="card-title">@item.Name</h5>
+                        
+                        <div class="mb-2">
+                            <span class="fs-4 fw-bold text-warning">@item.CoinAmount.ToString("N0")</span>
+                            <small class="text-muted">سکه</small>
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(item.Description))
+                        {
+                            <p class="text-muted small">@item.Description</p>
+                        }
+                        
+                        <div class="mb-3">
+                            @if (item.DiscountedPrice.HasValue)
+                            {
+                                <span class="text-decoration-line-through text-muted me-2">
+                                    @item.PriceInToman.ToString("N0")
+                                </span>
+                                <span class="fs-5 fw-bold text-success">
+                                    @item.DiscountedPrice.Value.ToString("N0") تومان
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="fs-5 fw-bold">
+                                    @item.PriceInToman.ToString("N0") تومان
+                                </span>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <div class="btn-group w-100">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary">
+                                <i class="bi bi-pencil"></i> ویرایش
+                            </a>
+                            <form asp-action="Delete" method="post" 
+                                  onsubmit="return confirm('آیا از حذف این بسته اطمینان دارید؟')">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash"></i> حذف
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

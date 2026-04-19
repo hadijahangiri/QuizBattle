@@ -1,0 +1,175 @@
+@model QuizBattle.AdminPanel.Models.QuestionListViewModel
+@{
+    ViewData["Title"] = "مدیریت سوالات";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">سوالات</h4>
+        <small class="text-muted">مجموع @Model.TotalCount سوال</small>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> سوال جدید
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">دسته‌بندی</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">همه دسته‌ها</option>
+                    @foreach (var category in ViewBag.Categories as List<QuizBattle.AdminPanel.Models.CategorySelectItem>)
+                    {
+                        <option value="@category.Id" selected="@(Model.CategoryFilter == category.Id)">@category.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">جستجو</label>
+                <input type="text" name="search" class="form-control" value="@Model.SearchTerm" placeholder="متن سوال...">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-search me-1"></i> جستجو
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Questions Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th width="40">#</th>
+                        <th>متن سوال</th>
+                        <th width="120">دسته‌بندی</th>
+                        <th width="100">دفعات استفاده</th>
+                        <th width="100">صحیح/غلط</th>
+                        <th width="80">گزارش</th>
+                        <th width="80">وضعیت</th>
+                        <th width="150">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var question in Model.Questions)
+                    {
+                        <tr>
+                            <td>@question.Id</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    @if (!string.IsNullOrEmpty(question.ImageUrl))
+                                    {
+                                        <img src="@question.ImageUrl" class="rounded me-2" width="40" height="40" style="object-fit: cover;">
+                                    }
+                                    <div>
+                                        <div class="text-truncate" style="max-width: 300px;">@question.Text</div>
+                                        <small class="text-success">✓ @question.CorrectAnswer</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-secondary">@question.CategoryName</span></td>
+                            <td>@question.TimesUsed</td>
+                            <td>
+                                <span class="text-success">@question.CorrectCount</span> /
+                                <span class="text-danger">@question.WrongCount</span>
+                            </td>
+                            <td>
+                                @if (question.ReportCount > 0)
+                                {
+                                    <span class="badge bg-danger">@question.ReportCount</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                <form asp-action="ToggleActive" method="post" style="display: inline;">
+                                    <input type="hidden" name="id" value="@question.Id" />
+                                    <button type="submit" class="btn btn-sm @(question.IsActive ? "btn-success" : "btn-secondary")">
+                                        @(question.IsActive ? "فعال" : "غیرفعال")
+                                    </button>
+                                </form>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@question.Id" class="btn btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" 
+                                            onclick="confirmDelete(@question.Id, '@question.Text.Replace("'", "\\'")')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage - 1)" 
+                   asp-route-categoryId="@Model.CategoryFilter" asp-route-search="@Model.SearchTerm">قبلی</a>
+            </li>
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i"
+                       asp-route-categoryId="@Model.CategoryFilter" asp-route-search="@Model.SearchTerm">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage + 1)"
+                   asp-route-categoryId="@Model.CategoryFilter" asp-route-search="@Model.SearchTerm">بعدی</a>
+            </li>
+        </ul>
+    </nav>
+}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تایید حذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>آیا از حذف این سوال مطمئن هستید؟</p>
+                <p class="text-muted" id="deleteQuestionText"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <form asp-action="Delete" method="post" id="deleteForm">
+                    <input type="hidden" name="id" id="deleteQuestionId" />
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(id, text) {
+            document.getElementById('deleteQuestionId').value = id;
+            document.getElementById('deleteQuestionText').textContent = text;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+}

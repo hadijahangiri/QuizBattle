@@ -1,0 +1,27 @@
+@model QuizBattle.Application.DTOs.GameSettingsDto
+
+@{
+    ViewData["Title"] = "تنظیمات بازی";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h4>تنظیمات بازی دو نفره</h4>
+        <p class="text-muted mb-0">زمانی که حریف برای پاسخ به چالش دو نفره فرصت دارد قبل از اعلام بازنده</p>
+    </div>
+    <div class="card-body">
+        <form asp-action="Index" method="post">
+            <div class="mb-3">
+                <label asp-for="OpponentResponseTimeoutHours" class="form-label">زمان انتظار حریف (ساعت)</label>
+                <input asp-for="OpponentResponseTimeoutHours" class="form-control" />
+                <span asp-validation-for="OpponentResponseTimeoutHours" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">ذخیره</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+}

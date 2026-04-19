@@ -1,0 +1,728 @@
+﻿Using launch settings from G:\_projects\MySelf\Games\QuizBattle\src\QuizBattle.API\Properties\launchSettings.json...
+Building...
+warn: Microsoft.EntityFrameworkCore.Model.Validation[30000]
+      No store type was specified for the decimal property 'DiscountPercent' on entity type 'StoreItem'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[30000]
+      No store type was specified for the decimal property 'PriceInToman' on entity type 'StoreItem'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+warn: Microsoft.EntityFrameworkCore.Model.Validation[30000]
+      No store type was specified for the decimal property 'PriceInToman' on entity type 'Transaction'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (25ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (20ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      
+      IF EXISTS
+          (SELECT *
+           FROM [sys].[objects] o
+           WHERE [o].[type] = 'U'
+           AND [o].[is_ms_shipped] = 0
+           AND [o].[object_id] NOT IN (SELECT [ep].[major_id]
+              FROM [sys].[extended_properties] AS [ep]
+              WHERE [ep].[minor_id] = 0
+                  AND [ep].[class] = 1
+                  AND [ep].[name] = N'microsoft_database_tools_support'
+          )
+      )
+      SELECT 1 ELSE SELECT 0
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [AspNetRoles] (
+          [Id] uniqueidentifier NOT NULL,
+          [Name] nvarchar(256) NULL,
+          [NormalizedName] nvarchar(256) NULL,
+          [ConcurrencyStamp] nvarchar(max) NULL,
+          CONSTRAINT [PK_AspNetRoles] PRIMARY KEY ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [AspNetUsers] (
+          [Id] uniqueidentifier NOT NULL,
+          [FullName] nvarchar(max) NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [IsActive] bit NOT NULL,
+          [UserName] nvarchar(256) NULL,
+          [NormalizedUserName] nvarchar(256) NULL,
+          [Email] nvarchar(256) NULL,
+          [NormalizedEmail] nvarchar(256) NULL,
+          [EmailConfirmed] bit NOT NULL,
+          [PasswordHash] nvarchar(max) NULL,
+          [SecurityStamp] nvarchar(max) NULL,
+          [ConcurrencyStamp] nvarchar(max) NULL,
+          [PhoneNumber] nvarchar(max) NULL,
+          [PhoneNumberConfirmed] bit NOT NULL,
+          [TwoFactorEnabled] bit NOT NULL,
+          [LockoutEnd] datetimeoffset NULL,
+          [LockoutEnabled] bit NOT NULL,
+          [AccessFailedCount] int NOT NULL,
+          CONSTRAINT [PK_AspNetUsers] PRIMARY KEY ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [Avatars] (
+          [Id] uniqueidentifier NOT NULL,
+          [Name] nvarchar(max) NOT NULL,
+          [ImageUrl] nvarchar(max) NOT NULL,
+          [IsDefault] bit NOT NULL,
+          [IsPremium] bit NOT NULL,
+          [CoinPrice] int NULL,
+          [IsActive] bit NOT NULL,
+          [OrderIndex] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_Avatars] PRIMARY KEY ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [Categories] (
+          [Id] uniqueidentifier NOT NULL,
+          [Name] nvarchar(max) NOT NULL,
+          [Description] nvarchar(max) NULL,
+          [IconUrl] nvarchar(max) NULL,
+          [IsActive] bit NOT NULL,
+          [OrderIndex] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_Categories] PRIMARY KEY ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [DailyChallenges] (
+          [Id] uniqueidentifier NOT NULL,
+          [ChallengeDate] datetime2 NOT NULL,
+          [IsActive] bit NOT NULL,
+          [ParticipantsCount] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_DailyChallenges] PRIMARY KEY ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [DailyRewards] (
+          [Id] uniqueidentifier NOT NULL,
+          [Day] int NOT NULL,
+          [CoinReward] int NOT NULL,
+          [SpecialReward] nvarchar(max) NULL,
+          [IsActive] bit NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_DailyRewards] PRIMARY KEY ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GameUsers] (
+          [Id] uniqueidentifier NOT NULL,
+          [Username] nvarchar(max) NOT NULL,
+          [Email] nvarchar(450) NULL,
+          [PhoneNumber] nvarchar(450) NULL,
+          [AvatarUrl] nvarchar(max) NOT NULL,
+          [IsGuest] bit NOT NULL,
+          [IsActive] bit NOT NULL,
+          [Coins] int NOT NULL,
+          [Score] int NOT NULL,
+          [TotalWins] int NOT NULL,
+          [TotalLosses] int NOT NULL,
+          [TotalDraws] int NOT NULL,
+          [Level] int NOT NULL,
+          [CurrentStreak] int NOT NULL,
+          [LastDailyRewardDate] datetime2 NULL,
+          [LastLoginAt] datetime2 NULL,
+          [HasCompletedTutorial] bit NOT NULL,
+          [DeviceToken] nvarchar(max) NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_GameUsers] PRIMARY KEY ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [StoreItems] (
+          [Id] uniqueidentifier NOT NULL,
+          [Name] nvarchar(max) NOT NULL,
+          [Description] nvarchar(max) NULL,
+          [CoinAmount] int NOT NULL,
+          [PriceInToman] decimal(18,2) NOT NULL,
+          [ImageUrl] nvarchar(max) NULL,
+          [IsActive] bit NOT NULL,
+          [IsPopular] bit NOT NULL,
+          [DiscountPercent] decimal(18,2) NULL,
+          [DiscountExpiresAt] datetime2 NULL,
+          [OrderIndex] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_StoreItems] PRIMARY KEY ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [AspNetRoleClaims] (
+          [Id] int NOT NULL IDENTITY,
+          [RoleId] uniqueidentifier NOT NULL,
+          [ClaimType] nvarchar(max) NULL,
+          [ClaimValue] nvarchar(max) NULL,
+          CONSTRAINT [PK_AspNetRoleClaims] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_AspNetRoleClaims_AspNetRoles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [AspNetRoles] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [AspNetUserClaims] (
+          [Id] int NOT NULL IDENTITY,
+          [UserId] uniqueidentifier NOT NULL,
+          [ClaimType] nvarchar(max) NULL,
+          [ClaimValue] nvarchar(max) NULL,
+          CONSTRAINT [PK_AspNetUserClaims] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_AspNetUserClaims_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [AspNetUserLogins] (
+          [LoginProvider] nvarchar(450) NOT NULL,
+          [ProviderKey] nvarchar(450) NOT NULL,
+          [ProviderDisplayName] nvarchar(max) NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          CONSTRAINT [PK_AspNetUserLogins] PRIMARY KEY ([LoginProvider], [ProviderKey]),
+          CONSTRAINT [FK_AspNetUserLogins_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [AspNetUserRoles] (
+          [UserId] uniqueidentifier NOT NULL,
+          [RoleId] uniqueidentifier NOT NULL,
+          CONSTRAINT [PK_AspNetUserRoles] PRIMARY KEY ([UserId], [RoleId]),
+          CONSTRAINT [FK_AspNetUserRoles_AspNetRoles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [AspNetRoles] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_AspNetUserRoles_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [AspNetUserTokens] (
+          [UserId] uniqueidentifier NOT NULL,
+          [LoginProvider] nvarchar(450) NOT NULL,
+          [Name] nvarchar(450) NOT NULL,
+          [Value] nvarchar(max) NULL,
+          CONSTRAINT [PK_AspNetUserTokens] PRIMARY KEY ([UserId], [LoginProvider], [Name]),
+          CONSTRAINT [FK_AspNetUserTokens_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [Questions] (
+          [Id] uniqueidentifier NOT NULL,
+          [Text] nvarchar(max) NOT NULL,
+          [ImageUrl] nvarchar(max) NULL,
+          [CategoryId] uniqueidentifier NOT NULL,
+          [Difficulty] int NOT NULL,
+          [Option1] nvarchar(max) NOT NULL,
+          [Option2] nvarchar(max) NOT NULL,
+          [Option3] nvarchar(max) NOT NULL,
+          [Option4] nvarchar(max) NOT NULL,
+          [CorrectAnswer] nvarchar(max) NOT NULL,
+          [TimesUsed] int NOT NULL,
+          [CorrectCount] int NOT NULL,
+          [WrongCount] int NOT NULL,
+          [ReportCount] int NOT NULL,
+          [LikesCount] int NOT NULL,
+          [DislikesCount] int NOT NULL,
+          [IsActive] bit NOT NULL,
+          [IsReviewed] bit NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_Questions] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_Questions_Categories_CategoryId] FOREIGN KEY ([CategoryId]) REFERENCES [Categories] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [CoinGiftRequests] (
+          [Id] uniqueidentifier NOT NULL,
+          [SenderId] uniqueidentifier NOT NULL,
+          [ReceiverId] uniqueidentifier NOT NULL,
+          [CoinAmount] int NOT NULL,
+          [Message] nvarchar(max) NULL,
+          [IsAccepted] bit NOT NULL,
+          [IsProcessed] bit NOT NULL,
+          [ProcessedAt] datetime2 NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_CoinGiftRequests] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_CoinGiftRequests_GameUsers_ReceiverId] FOREIGN KEY ([ReceiverId]) REFERENCES [GameUsers] ([Id]) ON DELETE NO ACTION,
+          CONSTRAINT [FK_CoinGiftRequests_GameUsers_SenderId] FOREIGN KEY ([SenderId]) REFERENCES [GameUsers] ([Id]) ON DELETE NO ACTION
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [DailyChallengeResults] (
+          [Id] uniqueidentifier NOT NULL,
+          [DailyChallengeId] uniqueidentifier NOT NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          [CorrectAnswers] int NOT NULL,
+          [TotalTimeSpent] int NOT NULL,
+          [Score] int NOT NULL,
+          [Rank] int NOT NULL,
+          [CompletedAt] datetime2 NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_DailyChallengeResults] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_DailyChallengeResults_DailyChallenges_DailyChallengeId] FOREIGN KEY ([DailyChallengeId]) REFERENCES [DailyChallenges] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_DailyChallengeResults_GameUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [Games] (
+          [Id] uniqueidentifier NOT NULL,
+          [Player1Id] uniqueidentifier NOT NULL,
+          [Player2Id] uniqueidentifier NOT NULL,
+          [Player1Score] int NOT NULL,
+          [Player2Score] int NOT NULL,
+          [CurrentRound] int NOT NULL,
+          [Status] int NOT NULL,
+          [WinnerId] uniqueidentifier NULL,
+          [StartedAt] datetime2 NULL,
+          [CompletedAt] datetime2 NULL,
+          [LastActivityAt] datetime2 NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_Games] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_Games_GameUsers_Player1Id] FOREIGN KEY ([Player1Id]) REFERENCES [GameUsers] ([Id]) ON DELETE NO ACTION,
+          CONSTRAINT [FK_Games_GameUsers_Player2Id] FOREIGN KEY ([Player2Id]) REFERENCES [GameUsers] ([Id]) ON DELETE NO ACTION,
+          CONSTRAINT [FK_Games_GameUsers_WinnerId] FOREIGN KEY ([WinnerId]) REFERENCES [GameUsers] ([Id]) ON DELETE NO ACTION
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [Groups] (
+          [Id] uniqueidentifier NOT NULL,
+          [Name] nvarchar(max) NOT NULL,
+          [Description] nvarchar(max) NULL,
+          [LogoUrl] nvarchar(max) NULL,
+          [UniqueCode] nvarchar(450) NOT NULL,
+          [OwnerId] uniqueidentifier NOT NULL,
+          [TotalScore] int NOT NULL,
+          [MembersCount] int NOT NULL,
+          [WinsCount] int NOT NULL,
+          [LossesCount] int NOT NULL,
+          [IsChatEnabled] bit NOT NULL,
+          [IsPublic] bit NOT NULL,
+          [InviteLink] nvarchar(max) NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_Groups] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_Groups_GameUsers_OwnerId] FOREIGN KEY ([OwnerId]) REFERENCES [GameUsers] ([Id]) ON DELETE NO ACTION
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [Notifications] (
+          [Id] uniqueidentifier NOT NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          [Title] nvarchar(max) NOT NULL,
+          [Message] nvarchar(max) NOT NULL,
+          [ImageUrl] nvarchar(max) NULL,
+          [ActionUrl] nvarchar(max) NULL,
+          [IsRead] bit NOT NULL,
+          [ReadAt] datetime2 NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_Notifications] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_Notifications_GameUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [UserDailyRewards] (
+          [Id] uniqueidentifier NOT NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          [DailyRewardId] uniqueidentifier NOT NULL,
+          [ClaimedAt] datetime2 NOT NULL,
+          [CoinsReceived] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_UserDailyRewards] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_UserDailyRewards_DailyRewards_DailyRewardId] FOREIGN KEY ([DailyRewardId]) REFERENCES [DailyRewards] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_UserDailyRewards_GameUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [Transactions] (
+          [Id] uniqueidentifier NOT NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          [Type] int NOT NULL,
+          [CoinAmount] int NOT NULL,
+          [PriceInToman] decimal(18,2) NULL,
+          [Description] nvarchar(max) NULL,
+          [StoreItemId] uniqueidentifier NULL,
+          [RelatedUserId] uniqueidentifier NULL,
+          [PaymentReferenceId] nvarchar(max) NULL,
+          [IsSuccessful] bit NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_Transactions] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_Transactions_GameUsers_RelatedUserId] FOREIGN KEY ([RelatedUserId]) REFERENCES [GameUsers] ([Id]) ON DELETE NO ACTION,
+          CONSTRAINT [FK_Transactions_GameUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_Transactions_StoreItems_StoreItemId] FOREIGN KEY ([StoreItemId]) REFERENCES [StoreItems] ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [Answers] (
+          [Id] uniqueidentifier NOT NULL,
+          [Text] nvarchar(max) NOT NULL,
+          [IsCorrect] bit NOT NULL,
+          [QuestionId] uniqueidentifier NOT NULL,
+          [OrderIndex] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_Answers] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_Answers_Questions_QuestionId] FOREIGN KEY ([QuestionId]) REFERENCES [Questions] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [DailyChallengeQuestions] (
+          [Id] uniqueidentifier NOT NULL,
+          [DailyChallengeId] uniqueidentifier NOT NULL,
+          [QuestionId] uniqueidentifier NOT NULL,
+          [QuestionOrder] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_DailyChallengeQuestions] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_DailyChallengeQuestions_DailyChallenges_DailyChallengeId] FOREIGN KEY ([DailyChallengeId]) REFERENCES [DailyChallenges] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_DailyChallengeQuestions_Questions_QuestionId] FOREIGN KEY ([QuestionId]) REFERENCES [Questions] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [QuestionReactions] (
+          [Id] uniqueidentifier NOT NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          [QuestionId] uniqueidentifier NOT NULL,
+          [Reaction] int NOT NULL,
+          [ReportReason] nvarchar(max) NULL,
+          [IsReviewed] bit NOT NULL,
+          [ReviewedAt] datetime2 NULL,
+          [ReviewedById] uniqueidentifier NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_QuestionReactions] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_QuestionReactions_GameUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_QuestionReactions_Questions_QuestionId] FOREIGN KEY ([QuestionId]) REFERENCES [Questions] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GameHelperUsages] (
+          [Id] uniqueidentifier NOT NULL,
+          [GameId] uniqueidentifier NOT NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          [HelperType] int NOT NULL,
+          [CoinsCost] int NOT NULL,
+          [RoundQuestionId] uniqueidentifier NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_GameHelperUsages] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_GameHelperUsages_GameUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_GameHelperUsages_Games_GameId] FOREIGN KEY ([GameId]) REFERENCES [Games] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GameRounds] (
+          [Id] uniqueidentifier NOT NULL,
+          [GameId] uniqueidentifier NOT NULL,
+          [RoundNumber] int NOT NULL,
+          [CategoryId] uniqueidentifier NOT NULL,
+          [CategorySelectorId] uniqueidentifier NOT NULL,
+          [Status] int NOT NULL,
+          [Player1Score] int NOT NULL,
+          [Player2Score] int NOT NULL,
+          [Player1AnsweredAt] datetime2 NULL,
+          [Player2AnsweredAt] datetime2 NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_GameRounds] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_GameRounds_Categories_CategoryId] FOREIGN KEY ([CategoryId]) REFERENCES [Categories] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_GameRounds_GameUsers_CategorySelectorId] FOREIGN KEY ([CategorySelectorId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_GameRounds_Games_GameId] FOREIGN KEY ([GameId]) REFERENCES [Games] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GroupBattles] (
+          [Id] uniqueidentifier NOT NULL,
+          [Group1Id] uniqueidentifier NOT NULL,
+          [Group2Id] uniqueidentifier NULL,
+          [Group1Score] int NOT NULL,
+          [Group2Score] int NOT NULL,
+          [PlayersPerTeam] int NOT NULL,
+          [Status] int NOT NULL,
+          [WinnerGroupId] uniqueidentifier NULL,
+          [MatchedAt] datetime2 NULL,
+          [StartedAt] datetime2 NULL,
+          [ExpiresAt] datetime2 NULL,
+          [CompletedAt] datetime2 NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_GroupBattles] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_GroupBattles_Groups_Group1Id] FOREIGN KEY ([Group1Id]) REFERENCES [Groups] ([Id]) ON DELETE NO ACTION,
+          CONSTRAINT [FK_GroupBattles_Groups_Group2Id] FOREIGN KEY ([Group2Id]) REFERENCES [Groups] ([Id]) ON DELETE NO ACTION,
+          CONSTRAINT [FK_GroupBattles_Groups_WinnerGroupId] FOREIGN KEY ([WinnerGroupId]) REFERENCES [Groups] ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GroupChats] (
+          [Id] uniqueidentifier NOT NULL,
+          [GroupId] uniqueidentifier NOT NULL,
+          [SenderId] uniqueidentifier NOT NULL,
+          [Message] nvarchar(max) NOT NULL,
+          [SentAt] datetime2 NOT NULL,
+          [IsDeleted] bit NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          CONSTRAINT [PK_GroupChats] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_GroupChats_GameUsers_SenderId] FOREIGN KEY ([SenderId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_GroupChats_Groups_GroupId] FOREIGN KEY ([GroupId]) REFERENCES [Groups] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GroupMembers] (
+          [Id] uniqueidentifier NOT NULL,
+          [GroupId] uniqueidentifier NOT NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          [Role] int NOT NULL,
+          [JoinedAt] datetime2 NOT NULL,
+          [ContributedScore] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_GroupMembers] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_GroupMembers_GameUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_GroupMembers_Groups_GroupId] FOREIGN KEY ([GroupId]) REFERENCES [Groups] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GroupMembershipRequests] (
+          [Id] uniqueidentifier NOT NULL,
+          [GroupId] uniqueidentifier NOT NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          [Message] nvarchar(max) NULL,
+          [Status] int NOT NULL,
+          [ReviewedAt] datetime2 NULL,
+          [ReviewedById] uniqueidentifier NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_GroupMembershipRequests] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_GroupMembershipRequests_GameUsers_ReviewedById] FOREIGN KEY ([ReviewedById]) REFERENCES [GameUsers] ([Id]),
+          CONSTRAINT [FK_GroupMembershipRequests_GameUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_GroupMembershipRequests_Groups_GroupId] FOREIGN KEY ([GroupId]) REFERENCES [Groups] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [DailyChallengeAnswers] (
+          [Id] uniqueidentifier NOT NULL,
+          [DailyChallengeResultId] uniqueidentifier NOT NULL,
+          [QuestionId] uniqueidentifier NOT NULL,
+          [AnswerId] uniqueidentifier NULL,
+          [TimeSpent] int NOT NULL,
+          [IsCorrect] bit NOT NULL,
+          [Score] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_DailyChallengeAnswers] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_DailyChallengeAnswers_Answers_AnswerId] FOREIGN KEY ([AnswerId]) REFERENCES [Answers] ([Id]),
+          CONSTRAINT [FK_DailyChallengeAnswers_DailyChallengeResults_DailyChallengeResultId] FOREIGN KEY ([DailyChallengeResultId]) REFERENCES [DailyChallengeResults] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_DailyChallengeAnswers_Questions_QuestionId] FOREIGN KEY ([QuestionId]) REFERENCES [Questions] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [RoundQuestions] (
+          [Id] uniqueidentifier NOT NULL,
+          [GameRoundId] uniqueidentifier NOT NULL,
+          [QuestionId] uniqueidentifier NOT NULL,
+          [QuestionOrder] int NOT NULL,
+          [Player1AnswerId] uniqueidentifier NULL,
+          [Player1TimeSpent] int NOT NULL,
+          [Player1IsCorrect] bit NOT NULL,
+          [Player1Score] int NOT NULL,
+          [Player1StartedAt] datetime2 NULL,
+          [Player2AnswerId] uniqueidentifier NULL,
+          [Player2TimeSpent] int NOT NULL,
+          [Player2IsCorrect] bit NOT NULL,
+          [Player2Score] int NOT NULL,
+          [Player2StartedAt] datetime2 NULL,
+          [Player1HelperUsed] int NULL,
+          [Player2HelperUsed] int NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_RoundQuestions] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_RoundQuestions_GameRounds_GameRoundId] FOREIGN KEY ([GameRoundId]) REFERENCES [GameRounds] ([Id]) ON DELETE NO ACTION,
+          CONSTRAINT [FK_RoundQuestions_Questions_QuestionId] FOREIGN KEY ([QuestionId]) REFERENCES [Questions] ([Id]) ON DELETE NO ACTION
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GroupBattlePlayers] (
+          [Id] uniqueidentifier NOT NULL,
+          [GroupBattleId] uniqueidentifier NOT NULL,
+          [GroupId] uniqueidentifier NOT NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          [PlayerOrder] int NOT NULL,
+          [HasPlayed] bit NOT NULL,
+          [Score] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_GroupBattlePlayers] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_GroupBattlePlayers_GameUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [GameUsers] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_GroupBattlePlayers_GroupBattles_GroupBattleId] FOREIGN KEY ([GroupBattleId]) REFERENCES [GroupBattles] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GroupBattleMatches] (
+          [Id] uniqueidentifier NOT NULL,
+          [GroupBattleId] uniqueidentifier NOT NULL,
+          [Group1PlayerId] uniqueidentifier NOT NULL,
+          [Group2PlayerId] uniqueidentifier NOT NULL,
+          [MatchOrder] int NOT NULL,
+          [Player1Score] int NOT NULL,
+          [Player2Score] int NOT NULL,
+          [WinnerUserId] uniqueidentifier NULL,
+          [Status] int NOT NULL,
+          [CompletedAt] datetime2 NULL,
+          [WinnerId] uniqueidentifier NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_GroupBattleMatches] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_GroupBattleMatches_GameUsers_WinnerId] FOREIGN KEY ([WinnerId]) REFERENCES [GameUsers] ([Id]),
+          CONSTRAINT [FK_GroupBattleMatches_GroupBattlePlayers_Group1PlayerId] FOREIGN KEY ([Group1PlayerId]) REFERENCES [GroupBattlePlayers] ([Id]) ON DELETE NO ACTION,
+          CONSTRAINT [FK_GroupBattleMatches_GroupBattlePlayers_Group2PlayerId] FOREIGN KEY ([Group2PlayerId]) REFERENCES [GroupBattlePlayers] ([Id]) ON DELETE NO ACTION,
+          CONSTRAINT [FK_GroupBattleMatches_GroupBattles_GroupBattleId] FOREIGN KEY ([GroupBattleId]) REFERENCES [GroupBattles] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GroupBattleMatchRounds] (
+          [Id] uniqueidentifier NOT NULL,
+          [GroupBattleMatchId] uniqueidentifier NOT NULL,
+          [CategoryId] uniqueidentifier NOT NULL,
+          [RoundNumber] int NOT NULL,
+          [Player1Score] int NOT NULL,
+          [Player2Score] int NOT NULL,
+          [Status] int NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_GroupBattleMatchRounds] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_GroupBattleMatchRounds_Categories_CategoryId] FOREIGN KEY ([CategoryId]) REFERENCES [Categories] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_GroupBattleMatchRounds_GroupBattleMatches_GroupBattleMatchId] FOREIGN KEY ([GroupBattleMatchId]) REFERENCES [GroupBattleMatches] ([Id]) ON DELETE CASCADE
+      );
+fail: Microsoft.EntityFrameworkCore.Database.Command[20102]
+      Failed executing DbCommand (42ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [GroupBattleMatchQuestions] (
+          [Id] uniqueidentifier NOT NULL,
+          [GroupBattleMatchRoundId] uniqueidentifier NOT NULL,
+          [QuestionId] uniqueidentifier NOT NULL,
+          [QuestionOrder] int NOT NULL,
+          [Player1AnswerId] uniqueidentifier NULL,
+          [Player2AnswerId] uniqueidentifier NULL,
+          [Player1TimeSpent] int NOT NULL,
+          [Player2TimeSpent] int NOT NULL,
+          [Player1IsCorrect] bit NOT NULL,
+          [Player2IsCorrect] bit NOT NULL,
+          [CreatedAt] datetime2 NOT NULL,
+          [UpdatedAt] datetime2 NULL,
+          [IsDeleted] bit NOT NULL,
+          CONSTRAINT [PK_GroupBattleMatchQuestions] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_GroupBattleMatchQuestions_GroupBattleMatchRounds_GroupBattleMatchRoundId] FOREIGN KEY ([GroupBattleMatchRoundId]) REFERENCES [GroupBattleMatchRounds] ([Id]) ON DELETE CASCADE,
+          CONSTRAINT [FK_GroupBattleMatchQuestions_Questions_QuestionId] FOREIGN KEY ([QuestionId]) REFERENCES [Questions] ([Id]) ON DELETE CASCADE
+      );
+dotnet : Unhandled exception. Microsoft.Data.SqlClient.SqlException 
+(0x80131904): Introducing FOREIGN KEY constraint 
+'FK_GroupBattleMatchQuestions_Questions_QuestionId' on table 
+'GroupBattleMatchQuestions' may cause cycles or multiple cascade paths. 
+Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN 
+KEY constraints.
+At line:1 char:49
++ ... d -c Debug > build_output.txt 2>&1 ; dotnet run > run_output.txt 2>&1
++                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Unhandled excep...EY constraints. 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Could not create constraint or index. See previous errors.
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, 
+Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException 
+exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStat
+eObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean 
+asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, 
+SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet 
+bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at 
+Microsoft.Data.SqlClient.SqlCommand.InternalEndExecuteNonQuery(IAsyncResult 
+asyncResult, Boolean isInternal, String endMethod)
+   at 
+Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQueryInternal(IAsyncResult 
+asyncResult)
+   at Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQueryAsync(IAsyncResult 
+asyncResult)
+   at Microsoft.Data.SqlClient.SqlCommand.<>c.<InternalExecuteNonQueryAsync>b__
+193_1(IAsyncResult asyncResult)
+   at System.Threading.Tasks.TaskFactory`1.FromAsyncCoreLogic(IAsyncResult 
+iar, Func`2 endFunction, Action`1 endAction, Task`1 promise, Boolean 
+requiresSynchronization)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAs
+ync(RelationalCommandParameterObject parameterObject, CancellationToken 
+cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAs
+ync(RelationalCommandParameterObject parameterObject, CancellationToken 
+cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAs
+ync(RelationalCommandParameterObject parameterObject, CancellationToken 
+cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecuto
+r.ExecuteAsync(IReadOnlyList`1 migrationCommands, IRelationalConnection 
+connection, MigrationExecutionState executionState, Boolean beginTransaction, 
+Boolean commitTransaction, Nullable`1 isolationLevel, CancellationToken 
+cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecuto
+r.ExecuteAsync(IReadOnlyList`1 migrationCommands, IRelationalConnection 
+connection, MigrationExecutionState executionState, Boolean beginTransaction, 
+Boolean commitTransaction, Nullable`1 isolationLevel, CancellationToken 
+cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass
+30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementa
+tionAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState 
+state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementa
+tionAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState 
+state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TSta
+te,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, 
+CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecuto
+r.ExecuteNonQueryAsync(IReadOnlyList`1 migrationCommands, 
+IRelationalConnection connection, MigrationExecutionState executionState, 
+Boolean commitTransaction, Nullable`1 isolationLevel, CancellationToken 
+cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabaseCreator.EnsureCre
+atedAsync(CancellationToken cancellationToken)
+   at Program.<<Main>$>g__EnsureDatabaseCreatedAsync|0_4(IServiceProvider 
+services) in 
+G:\_projects\MySelf\Games\QuizBattle\src\QuizBattle.API\Program.cs:line 112
+   at Program.<Main>$(String[] args) in 
+G:\_projects\MySelf\Games\QuizBattle\src\QuizBattle.API\Program.cs:line 89
+   at Program.<Main>(String[] args)
+ClientConnectionId:14d8aebd-e5a9-40e6-9c21-06ecf44af705
+Error Number:1785,State:0,Class:16

@@ -1,0 +1,349 @@
+@page "/store"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject AppState AppState
+
+<div class="store-container">
+    <div class="store-header">
+        <button class="back-btn" @onclick="GoBack">←</button>
+        <h2>فروشگاه</h2>
+        <div class="user-balance">
+            <div class="balance-item">
+                <span class="coin-icon">💰</span>
+                <span>@AppState.UserCoins.ToString("N0")</span>
+            </div>
+            <div class="balance-item">
+                <span class="ticket-icon">🎟️</span>
+                <span>@AppState.Tickets</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="store-tabs">
+        <button class="tab @(activeTab == "coins" ? "active" : "")" @onclick='() => activeTab = "coins"'>
+            خرید سکه
+        </button>
+        <button class="tab @(activeTab == "tickets" ? "active" : "")" @onclick='() => activeTab = "tickets"'>
+            🎟️ بلیت
+        </button>
+        <button class="tab @(activeTab == "helpers" ? "active" : "")" @onclick='() => activeTab = "helpers"'>
+            کمک‌ها
+        </button>
+        <button class="tab @(activeTab == "gift" ? "active" : "")" @onclick='() => activeTab = "gift"'>
+            هدیه سکه
+        </button>
+    </div>
+
+    @if (activeTab == "coins")
+    {
+        <div class="coin-packages">
+            @foreach (var package in coinPackages)
+            {
+                <div class="package-card @(package.IsPopular ? "popular" : "")" @onclick="() => PurchaseCoins(package)">
+                    @if (package.IsPopular)
+                    {
+                        <span class="popular-badge">پرفروش</span>
+                    }
+                    <div class="coin-amount">
+                        <span class="coin-icon">💰</span>
+                        <span>@package.Coins.ToString("N0")</span>
+                    </div>
+                    @if (package.BonusCoins > 0)
+                    {
+                        <div class="bonus">+@package.BonusCoins.ToString("N0") هدیه</div>
+                    }
+                    <div class="price">@package.Price.ToString("N0") تومان</div>
+                </div>
+            }
+        </div>
+    }
+    else if (activeTab == "tickets")
+    {
+        <div class="tickets-section">
+            <div class="tickets-info">
+                <div class="info-icon">🎟️</div>
+                <h3>بلیت مسابقات</h3>
+                <p>برای شرکت در مسابقات هفتگی به بلیت نیاز دارید</p>
+            </div>
+            
+            <div class="ticket-packages">
+                @foreach (var pkg in ticketPackages)
+                {
+                    <div class="ticket-card @(pkg.IsBestValue ? "best-value" : "")" @onclick="() => BuyTicketPackage(pkg)">
+                        @if (pkg.IsBestValue)
+                        {
+                            <span class="best-badge">بهترین پیشنهاد</span>
+                        }
+                        <div class="ticket-amount">
+                            <span class="ticket-icon">🎟️</span>
+                            <span>@pkg.Tickets بلیت</span>
+                        </div>
+                        @if (pkg.BonusTickets > 0)
+                        {
+                            <div class="bonus">+@pkg.BonusTickets هدیه</div>
+                        }
+                        <div class="ticket-price">
+                            <span class="coin-icon">💰</span>
+                            <span>@pkg.CoinCost سکه</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (ticketPurchaseMessage != null)
+            {
+                <div class="purchase-message @(ticketPurchaseSuccess ? "success" : "error")">
+                    @ticketPurchaseMessage
+                </div>
+            }
+        </div>
+    }
+    else if (activeTab == "helpers")
+    {
+        <div class="helpers-list">
+            @foreach (var item in helperItems)
+            {
+                <div class="helper-card">
+                    <div class="helper-icon">@item.Icon</div>
+                    <div class="helper-info">
+                        <h4>@item.Name</h4>
+                        <p>@item.Description</p>
+                    </div>
+                    <div class="helper-price">
+                        <span class="coin-icon">💰</span>
+                        <span>@item.Price</span>
+                    </div>
+                    <button class="buy-btn" @onclick="() => PurchaseHelperItem(item)">خرید</button>
+                </div>
+            }
+        </div>
+    }
+    else if (activeTab == "gift")
+    {
+        <div class="gift-section">
+            <div class="gift-icon">🎁</div>
+            <h3>هدیه سکه به دوستان</h3>
+            <p>نام کاربری یا ایمیل دوست خود را وارد کنید</p>
+            
+            <div class="gift-form">
+                <input type="text" @bind="giftRecipient" placeholder="نام کاربری یا ایمیل" />
+                <input type="number" @bind="giftAmount" placeholder="تعداد سکه" min="10" />
+                
+                <div class="gift-preview">
+                    <span>هزینه انتقال: </span>
+                    <span class="fee">@((giftAmount * 0.05).ToString("N0")) سکه</span>
+                </div>
+                
+                <button class="btn btn-primary" @onclick="SendGift" disabled="@(string.IsNullOrEmpty(giftRecipient) || giftAmount < 10)">
+                    ارسال هدیه
+                </button>
+            </div>
+
+            <div class="recent-gifts">
+                <h4>هدیه‌های اخیر</h4>
+                @if (recentGifts.Any())
+                {
+                    @foreach (var gift in recentGifts)
+                    {
+                        <div class="gift-item">
+                            <img src="@gift.RecipientAvatar" alt="" class="avatar" />
+                            <span class="name">@gift.RecipientName</span>
+                            <span class="amount">💰 @gift.Amount</span>
+                            <span class="date">@gift.Date.ToString("MM/dd")</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="no-gifts">هنوز هدیه‌ای ارسال نکرده‌اید</p>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Purchase Modal -->
+@if (showPurchaseModal)
+{
+    <div class="modal-overlay" @onclick="ClosePurchaseModal">
+        <div class="modal" @onclick:stopPropagation>
+            <h3>تایید خرید</h3>
+            <div class="purchase-details">
+                <p>آیا مطمئن هستید؟</p>
+                <div class="purchase-item">
+                    <span>@selectedPackage?.Coins.ToString("N0") سکه</span>
+                    <span>@selectedPackage?.Price.ToString("N0") تومان</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" @onclick="ClosePurchaseModal">انصراف</button>
+                <button class="btn btn-primary" @onclick="ConfirmPurchase">پرداخت</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string activeTab = "coins";
+    private string giftRecipient = "";
+    private int giftAmount = 100;
+    private bool showPurchaseModal = false;
+    private CoinPackage? selectedPackage;
+
+    private List<CoinPackage> coinPackages = new()
+    {
+        new CoinPackage { Coins = 100, Price = 10000, BonusCoins = 0, IsPopular = false },
+        new CoinPackage { Coins = 500, Price = 45000, BonusCoins = 50, IsPopular = false },
+        new CoinPackage { Coins = 1000, Price = 85000, BonusCoins = 150, IsPopular = true },
+        new CoinPackage { Coins = 2500, Price = 200000, BonusCoins = 500, IsPopular = false },
+        new CoinPackage { Coins = 5000, Price = 380000, BonusCoins = 1200, IsPopular = false },
+        new CoinPackage { Coins = 10000, Price = 700000, BonusCoins = 3000, IsPopular = false }
+    };
+
+    private List<HelperItem> helperItems = new()
+    {
+        new HelperItem { Name = "حذف دو گزینه", Icon = "✂️", Description = "دو گزینه اشتباه حذف می‌شود", Price = 50 },
+        new HelperItem { Name = "دو جواب", Icon = "✌️", Description = "می‌توانید دو بار جواب دهید", Price = 75 },
+        new HelperItem { Name = "زمان اضافه", Icon = "⏱️", Description = "۱۰ ثانیه زمان اضافه", Price = 40 },
+        new HelperItem { Name = "بسته کمک‌ها", Icon = "📦", Description = "هر کدام ۳ عدد", Price = 300 }
+    };
+
+    private List<TicketPackage> ticketPackages = new()
+    {
+        new TicketPackage { Tickets = 1, CoinCost = 100, BonusTickets = 0, IsBestValue = false },
+        new TicketPackage { Tickets = 3, CoinCost = 250, BonusTickets = 0, IsBestValue = false },
+        new TicketPackage { Tickets = 5, CoinCost = 400, BonusTickets = 1, IsBestValue = true },
+        new TicketPackage { Tickets = 10, CoinCost = 750, BonusTickets = 3, IsBestValue = false }
+    };
+
+    private string? ticketPurchaseMessage = null;
+    private bool ticketPurchaseSuccess = false;
+
+    private List<GiftRecord> recentGifts = new();
+
+    private void GoBack() => NavigationManager.NavigateTo("/");
+
+    private void PurchaseCoins(CoinPackage package)
+    {
+        selectedPackage = package;
+        showPurchaseModal = true;
+    }
+
+    private void ClosePurchaseModal()
+    {
+        showPurchaseModal = false;
+        selectedPackage = null;
+    }
+
+    private async Task ConfirmPurchase()
+    {
+        if (selectedPackage == null) return;
+        
+        // TODO: Integrate with payment gateway (ZarinPal, etc.)
+        // For now, simulate purchase
+        AppState.UserCoins += selectedPackage.Coins + selectedPackage.BonusCoins;
+        
+        ClosePurchaseModal();
+        StateHasChanged();
+    }
+
+    private async Task PurchaseHelperItem(HelperItem item)
+    {
+        if (AppState.UserCoins < item.Price)
+        {
+            // Show insufficient coins message
+            return;
+        }
+
+        AppState.UserCoins -= item.Price;
+        // TODO: Add helper to user's inventory
+        StateHasChanged();
+    }
+
+    private async Task SendGift()
+    {
+        if (string.IsNullOrEmpty(giftRecipient) || giftAmount < 10) return;
+
+        int fee = (int)(giftAmount * 0.05);
+        int totalCost = giftAmount + fee;
+
+        if (AppState.UserCoins < totalCost)
+        {
+            // Show insufficient coins message
+            return;
+        }
+
+        // TODO: Call API to send gift
+        AppState.UserCoins -= totalCost;
+        
+        recentGifts.Insert(0, new GiftRecord
+        {
+            RecipientName = giftRecipient,
+            RecipientAvatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + giftRecipient,
+            Amount = giftAmount,
+            Date = DateTime.Now
+        });
+
+        giftRecipient = "";
+        giftAmount = 100;
+        StateHasChanged();
+    }
+
+    private void BuyTicketPackage(TicketPackage pkg)
+    {
+        ticketPurchaseMessage = null;
+        
+        if (AppState.UserCoins < pkg.CoinCost)
+        {
+            ticketPurchaseMessage = "سکه کافی ندارید!";
+            ticketPurchaseSuccess = false;
+            StateHasChanged();
+            return;
+        }
+
+        if (AppState.BuyTicket(pkg.Tickets + pkg.BonusTickets, pkg.CoinCost))
+        {
+            ticketPurchaseMessage = $"خرید موفق! {pkg.Tickets + pkg.BonusTickets} بلیت اضافه شد";
+            ticketPurchaseSuccess = true;
+        }
+        else
+        {
+            ticketPurchaseMessage = "خطا در خرید!";
+            ticketPurchaseSuccess = false;
+        }
+        StateHasChanged();
+    }
+
+    private class CoinPackage
+    {
+        public int Coins { get; set; }
+        public int Price { get; set; }
+        public int BonusCoins { get; set; }
+        public bool IsPopular { get; set; }
+    }
+
+    private class HelperItem
+    {
+        public string Name { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public string Description { get; set; } = "";
+        public int Price { get; set; }
+    }
+
+    private class GiftRecord
+    {
+        public string RecipientName { get; set; } = "";
+        public string RecipientAvatar { get; set; } = "";
+        public int Amount { get; set; }
+        public DateTime Date { get; set; }
+    }
+
+    private class TicketPackage
+    {
+        public int Tickets { get; set; }
+        public int CoinCost { get; set; }
+        public int BonusTickets { get; set; }
+        public bool IsBestValue { get; set; }
+    }
+}

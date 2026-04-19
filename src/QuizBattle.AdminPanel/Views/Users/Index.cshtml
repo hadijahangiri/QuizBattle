@@ -1,0 +1,154 @@
+@model QuizBattle.AdminPanel.Models.UserListViewModel
+@{
+    ViewData["Title"] = "کاربران";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">کاربران</h4>
+        <small class="text-muted">مجموع @Model.TotalCount کاربر</small>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" name="search" class="form-control" value="@Model.SearchTerm" 
+                       placeholder="جستجو بر اساس نام کاربری، ایمیل یا شماره تلفن...">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1"></i> جستجو
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th width="60">#</th>
+                        <th>کاربر</th>
+                        <th>ایمیل / تلفن</th>
+                        <th width="100">سکه</th>
+                        <th width="120">برد/باخت</th>
+                        <th width="80">سطح</th>
+                        <th width="80">وضعیت</th>
+                        <th width="130">تاریخ عضویت</th>
+                        <th width="100">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var rowIndex = (Model.CurrentPage - 1) * 20; }
+                    @foreach (var user in Model.Users)
+                    {
+                        rowIndex++;
+                        <tr>
+                            <td>@rowIndex</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    @{
+                                        var isEmoji = !string.IsNullOrEmpty(user.AvatarUrl) && !user.AvatarUrl.StartsWith("http");
+                                    }
+                                    @if (isEmoji)
+                                    {
+                                        <div class="rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                             style="width: 36px; height: 36px; background-color: #4ECDC4; font-size: 20px;">
+                                            @user.AvatarUrl
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <img src="@(string.IsNullOrEmpty(user.AvatarUrl) ? $"https://api.dicebear.com/7.x/avataaars/svg?seed={user.Username}" : user.AvatarUrl)" 
+                                             class="rounded-circle me-2" width="36" height="36">
+                                    }
+                                    <div>
+                                        <strong>@user.Username</strong>
+                                        @if (user.IsGuest)
+                                        {
+                                            <span class="badge bg-warning text-dark ms-1">مهمان</span>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(user.Email))
+                                {
+                                    <div>@user.Email</div>
+                                }
+                                @if (!string.IsNullOrEmpty(user.PhoneNumber))
+                                {
+                                    <small class="text-muted">@user.PhoneNumber</small>
+                                }
+                                @if (string.IsNullOrEmpty(user.Email) && string.IsNullOrEmpty(user.PhoneNumber))
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="text-warning">🪙</span> @user.Coins.ToString("N0")
+                            </td>
+                            <td>
+                                <span class="text-success">@user.TotalWins</span> /
+                                <span class="text-danger">@user.TotalLosses</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">@user.Level</span>
+                            </td>
+                            <td>
+                                <form asp-action="ToggleActive" method="post" style="display: inline;">
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    <button type="submit" class="btn btn-sm @(user.IsActive ? "btn-success" : "btn-secondary")">
+                                        @(user.IsActive ? "فعال" : "بن")
+                                    </button>
+                                </form>
+                            </td>
+                            <td>@user.CreatedAt.ToString("yyyy/MM/dd")</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-outline-info">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage - 1)" 
+                   asp-route-search="@Model.SearchTerm">قبلی</a>
+            </li>
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i"
+                       asp-route-search="@Model.SearchTerm">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage + 1)"
+                   asp-route-search="@Model.SearchTerm">بعدی</a>
+            </li>
+        </ul>
+    </nav>
+}

@@ -1,0 +1,62 @@
+@model QuizBattle.AdminPanel.Models.EditCategoryViewModel
+@{
+    ViewData["Title"] = "ویرایش دسته‌بندی";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pencil me-2"></i>ویرایش دسته‌بندی
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="IconUrl" class="form-label"></label>
+                        <input asp-for="IconUrl" class="form-control" />
+                        @if (!string.IsNullOrEmpty(Model.IconUrl))
+                        {
+                            <img src="@Model.IconUrl" class="mt-2 rounded" style="max-height: 64px;">
+                        }
+                        <span asp-validation-for="IconUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check form-switch mb-4">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch">
+                        <label asp-for="IsActive" class="form-check-label">دسته‌بندی فعال باشد</label>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-right me-1"></i>بازگشت
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>ذخیره تغییرات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,67 @@
+﻿@inject QuizBattle.PWA.Services.UserStateService UserStateService
+@inject QuizBattle.Shared.AppState AppState
+@inject NavigationManager Navigation
+
+@if (_isLoading)
+{
+    <div class="loading-overlay">
+        <div class="loading-card">
+            <div class="spinner"></div>
+            <h3>در حال بارگذاری...</h3>
+        </div>
+    </div>
+}
+else
+{
+    <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="@(new[] { typeof(QuizBattle.Shared.AppState).Assembly })" NotFoundPage="typeof(QuizBattle.Shared.Pages.NotFound)">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(QuizBattle.Shared.Layout.MainLayout)"/>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+    </Router>
+}
+
+@code {
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UserStateService.LoadUserStateAsync();
+        
+        // Subscribe to state changes to auto-save
+        AppState.OnChange += OnAppStateChanged;
+        
+        // Subscribe to unauthorized events to redirect to login
+        AppState.OnUnauthorized += OnUnauthorized;
+        
+        _isLoading = false;
+    }
+
+    private async void OnAppStateChanged()
+    {
+        try
+        {
+            await UserStateService.SaveUserStateAsync();
+        }
+        catch
+        {
+            // Ignore save errors
+        }
+    }
+
+    private void OnUnauthorized()
+    {
+        // پاک کردن اطلاعات کاربر و هدایت به صفحه ورود
+        _ = InvokeAsync(async () =>
+        {
+            await UserStateService.ClearUserStateAsync();
+            Navigation.NavigateTo("/onboarding", forceLoad: true);
+        });
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= OnAppStateChanged;
+        AppState.OnUnauthorized -= OnUnauthorized;
+    }
+}

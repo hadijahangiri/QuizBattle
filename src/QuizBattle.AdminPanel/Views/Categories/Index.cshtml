@@ -1,0 +1,119 @@
+@model QuizBattle.AdminPanel.Models.CategoryListViewModel
+@{
+    ViewData["Title"] = "دسته‌بندی‌ها";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">دسته‌بندی‌ها</h4>
+        <small class="text-muted">مجموع @Model.Categories.Count دسته‌بندی</small>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> دسته‌بندی جدید
+    </a>
+</div>
+
+<div class="row g-4">
+    @foreach (var category in Model.Categories)
+    {
+        var isEmoji = !string.IsNullOrEmpty(category.IconUrl) && !category.IconUrl.StartsWith("http");
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        @if (!string.IsNullOrEmpty(category.IconUrl))
+                        {
+                            if (isEmoji)
+                            {
+                                <div class="bg-primary bg-opacity-10 rounded d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 48px; height: 48px; font-size: 28px;">
+                                    @category.IconUrl
+                                </div>
+                            }
+                            else
+                            {
+                                <img src="@category.IconUrl" class="rounded me-3" width="48" height="48">
+                            }
+                        }
+                        else
+                        {
+                            <div class="bg-primary bg-opacity-10 rounded d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 48px; height: 48px;">
+                                <i class="bi bi-folder text-primary" style="font-size: 24px;"></i>
+                            </div>
+                        }
+                        <div>
+                            <h5 class="mb-0">@category.Name</h5>
+                            <span class="badge @(category.IsActive ? "bg-success" : "bg-secondary")">
+                                @(category.IsActive ? "فعال" : "غیرفعال")
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="mb-0 text-primary">@category.QuestionCount</h4>
+                            <small class="text-muted">سوال</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="mb-0 text-success">@category.GamesPlayed</h4>
+                            <small class="text-muted">بازی</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0 d-flex justify-content-between">
+                    <small class="text-muted">ایجاد: @category.CreatedAt.ToString("yyyy/MM/dd")</small>
+                    <div class="btn-group btn-group-sm">
+                        <a asp-action="Edit" asp-route-id="@category.Id" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form asp-action="ToggleActive" method="post" style="display: inline;">
+                            <input type="hidden" name="id" value="@category.Id" />
+                            <button type="submit" class="btn btn-outline-@(category.IsActive ? "warning" : "success")">
+                                <i class="bi bi-@(category.IsActive ? "pause" : "play")"></i>
+                            </button>
+                        </form>
+                        @if (category.QuestionCount == 0)
+                        {
+                            <button type="button" class="btn btn-outline-danger" 
+                                    onclick="confirmDelete(@category.Id, '@category.Name')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">حذف دسته‌بندی</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>آیا از حذف دسته‌بندی <strong id="deleteCategoryName"></strong> مطمئن هستید؟</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <form asp-action="Delete" method="post" id="deleteForm">
+                    <input type="hidden" name="id" id="deleteCategoryId" />
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(id, name) {
+            document.getElementById('deleteCategoryId').value = id;
+            document.getElementById('deleteCategoryName').textContent = name;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+}

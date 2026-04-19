@@ -1,0 +1,578 @@
+@page "/daily-challenge"
+@using System.Timers
+@inject HttpClient Http
+@inject AppState AppState
+@inject NavigationManager Navigation
+
+<div class="daily-challenge-container">
+    <button class="back-btn-floating" @onclick="GoHome">→</button>
+    
+    @if (isLoading)
+    {
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+    }
+    else if (challenge == null)
+    {
+        <div class="no-challenge">
+            <h2>📅 چالش روزانه</h2>
+            <p>چالش روزانه هنوز منتشر نشده است. لطفاً بعداً مراجعه کنید.</p>
+        </div>
+    }
+    else if (challenge.HasUserParticipated)
+    {
+        <!-- نتیجه شرکت قبلی + جدول رتبه‌بندی -->
+        <div class="challenge-done-screen">
+            <div class="challenge-done-header">
+                <span class="challenge-done-icon">🏆</span>
+                <h2>چالش امروز</h2>
+            </div>
+
+            <div class="challenge-my-result">
+                <div class="my-result-row">
+                    <div class="my-result-item">
+                        <span class="my-result-label">امتیاز شما</span>
+                        <span class="my-result-value">@challenge.UserScore</span>
+                    </div>
+                    <div class="my-result-divider"></div>
+                    <div class="my-result-item">
+                        <span class="my-result-label">رتبه شما</span>
+                        <span class="my-result-value">#@challenge.UserRank</span>
+                    </div>
+                    <div class="my-result-divider"></div>
+                    <div class="my-result-item">
+                        <span class="my-result-label">شرکت‌کنندگان</span>
+                        <span class="my-result-value">@challenge.ParticipantsCount</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="leaderboard-section">
+                <h3>🏅 جدول امتیازات</h3>
+                <div class="leaderboard-list">
+                    @foreach (var entry in leaderboardResults)
+                    {
+                        var isMe = entry.UserId == AppState.CurrentUserId;
+                        <div class="leaderboard-item @(isMe ? "leaderboard-me" : "")">
+                            <span class="lb-rank @(entry.Rank <= 3 ? "lb-top" : "")">@GetRankIcon(entry.Rank)</span>
+                            <span class="lb-avatar">@entry.AvatarUrl</span>
+                            <span class="lb-name">@entry.Username @(isMe ? "❌️‍➡️ شما" : "")</span>
+                            <span class="lb-score">@entry.Score</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" @onclick="GoHome">بازگشت به منو</button>
+        </div>
+    }
+    else if (!isPlaying)
+    {
+        <!-- شروع چالش -->
+        <div class="challenge-start">
+            <h2>📅 چالش روزانه</h2>
+            <div class="challenge-info">
+                <p>🎯 @challenge.QuestionsCount سوال</p>
+                <p>👥 @challenge.ParticipantsCount شرکت‌کننده</p>
+                <p>⏱️ هر سوال 15 ثانیه</p>
+            </div>
+            <button class="btn btn-primary" @onclick="StartChallenge">شروع چالش</button>
+        </div>
+    }
+    else if (currentQuestion != null)
+    {
+        <!-- سوال فعلی -->
+        <div class="question-container">
+            <div class="challenge-header">
+                <div class="progress">سوال @currentQuestionIndex/@totalQuestions</div>
+                <div class="timer @(timeLeft <= 5 ? "warning" : "")">⏱️ @timeLeft</div>
+                <div class="score">امتیاز: @totalScore</div>
+            </div>
+
+            <div class="question">
+                @if (!string.IsNullOrEmpty(currentQuestion.Question.ImageUrl))
+                {
+                    <img src="@currentQuestion.Question.ImageUrl" class="question-image" />
+                }
+                <p class="question-text">@currentQuestion.Question.Text</p>
+            </div>
+
+            <div class="answers">
+                @foreach (var answer in currentQuestion.Question.Answers)
+                {
+                    var answerClass = GetAnswerClass(answer.Id);
+                    <button class="answer-btn @answerClass"
+                            @onclick="@(() => SubmitAnswer(answer.Id))"
+                            disabled="@(selectedAnswer != null)">
+                        @answer.Text
+                    </button>
+                }
+            </div>
+
+            <div class="question-actions">
+                <button class="action-btn like" @onclick="LikeQuestion" disabled="@hasReactedToCurrentQuestion">👍</button>
+                <button class="action-btn dislike" @onclick="DislikeQuestion" disabled="@hasReactedToCurrentQuestion">👎</button>
+                <button class="action-btn report" @onclick="ReportQuestion" disabled="@hasReactedToCurrentQuestion">🚩</button>
+            </div>
+        </div>
+    }
+    else if (showFinalResult)
+    {
+        <!-- نتیجه نهایی -->
+        <div class="final-result">
+            <h2>🎉 چالش تمام شد!</h2>
+            <div class="result-stats">
+                <div class="stat">
+                    <span class="label">پاسخ‌های صحیح</span>
+                    <span class="value">@correctAnswers/@totalQuestions</span>
+                </div>
+                <div class="stat">
+                    <span class="label">امتیاز کل</span>
+                    <span class="value">@totalScore</span>
+                </div>
+            </div>
+            <div class="loading" style="margin-top:16px">
+                <div class="spinner"></div>
+                <p>در حال محاسبه رتبه‌بندی...</p>
+            </div>
+        </div>
+    }
+
+    @if (showLeaderboard)
+    {
+        <!-- لیدربورد modal - حذف شد، الان در صفحه challenge-done-screen نمایش داده می‌شود -->
+    }
+</div>
+
+@code {
+    private DailyChallengeDto? challenge;
+    private List<DailyChallengeQuestionDto> questions = new();
+    private DailyChallengeQuestionDto? currentQuestion;
+    private List<DailyChallengeResultDto> leaderboardResults = new();
+    
+    private bool isLoading = true;
+    private bool isPlaying = false;
+    private bool showFinalResult = false;
+    private bool showLeaderboard = false;
+    
+    private int currentQuestionIndex = 1;
+    private int totalQuestions = 10;
+    private int timeLeft = 15;
+    private Timer? timer;
+    
+    private Guid? selectedAnswer;
+    private Guid? correctAnswerId;
+    private bool hasReactedToCurrentQuestion = false;
+    private int? currentQuestionReaction;
+    private int totalScore = 0;
+    private int correctAnswers = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadChallenge();
+    }
+
+    private async Task LoadChallenge()
+    {
+        isLoading = true;
+        try
+        {
+            challenge = await Http.GetFromJsonAsync<DailyChallengeDto>($"dailychallenges/today?userId={AppState.CurrentUserId}");
+        }
+        catch 
+        { 
+            // Use mock data for demo
+            challenge = new DailyChallengeDto
+            {
+                Id = Guid.NewGuid(),
+                Title = "چالش روزانه",
+                QuestionsCount = 5,
+                ParticipantsCount = 128,
+                HasUserParticipated = AppState.HasPlayedDailyChallengeToday,
+                UserScore = AppState.HasPlayedDailyChallengeToday ? AppState.DailyChallengeScore : null,
+                UserRank = AppState.HasPlayedDailyChallengeToday ? AppState.DailyChallengeRank : null,
+            };
+            
+            mockQuestions = GenerateMockQuestions();
+
+            if (AppState.HasPlayedDailyChallengeToday)
+            {
+                leaderboardResults = GenerateMockLeaderboard(
+                    AppState.DailyChallengeRank ?? 0, AppState.DailyChallengeScore ?? 0);
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    
+    private List<DailyChallengeQuestionDto> mockQuestions = new();
+    
+    private List<DailyChallengeQuestionDto> GenerateMockQuestions()
+    {
+        return new List<DailyChallengeQuestionDto>
+        {
+            new DailyChallengeQuestionDto {
+                Question = new QuestionDto {
+                    Id = Guid.NewGuid(),
+                    Text = "پایتخت فرانسه کجاست؟",
+                    Answers = new List<AnswerDto> {
+                        new() { Id = Guid.NewGuid(), Text = "لندن" },
+                        new() { Id = Guid.NewGuid(), Text = "پاریس", IsCorrect = true },
+                        new() { Id = Guid.NewGuid(), Text = "برلین" },
+                        new() { Id = Guid.NewGuid(), Text = "رم" }
+                    }
+                }
+            },
+            new DailyChallengeQuestionDto {
+                Question = new QuestionDto {
+                    Id = Guid.NewGuid(),
+                    Text = "کدام سیاره بزرگ‌ترین سیاره منظومه شمسی است؟",
+                    Answers = new List<AnswerDto> {
+                        new() { Id = Guid.NewGuid(), Text = "زمین" },
+                        new() { Id = Guid.NewGuid(), Text = "مریخ" },
+                        new() { Id = Guid.NewGuid(), Text = "مشتری", IsCorrect = true },
+                        new() { Id = Guid.NewGuid(), Text = "زحل" }
+                    }
+                }
+            },
+            new DailyChallengeQuestionDto {
+                Question = new QuestionDto {
+                    Id = Guid.NewGuid(),
+                    Text = "حاصل ۲۵ + ۳۷ چند است؟",
+                    Answers = new List<AnswerDto> {
+                        new() { Id = Guid.NewGuid(), Text = "۵۲" },
+                        new() { Id = Guid.NewGuid(), Text = "۶۲", IsCorrect = true },
+                        new() { Id = Guid.NewGuid(), Text = "۷۲" },
+                        new() { Id = Guid.NewGuid(), Text = "۴۲" }
+                    }
+                }
+            },
+            new DailyChallengeQuestionDto {
+                Question = new QuestionDto {
+                    Id = Guid.NewGuid(),
+                    Text = "شاعر شاهنامه کیست؟",
+                    Answers = new List<AnswerDto> {
+                        new() { Id = Guid.NewGuid(), Text = "حافظ" },
+                        new() { Id = Guid.NewGuid(), Text = "سعدی" },
+                        new() { Id = Guid.NewGuid(), Text = "فردوسی", IsCorrect = true },
+                        new() { Id = Guid.NewGuid(), Text = "مولوی" }
+                    }
+                }
+            },
+            new DailyChallengeQuestionDto {
+                Question = new QuestionDto {
+                    Id = Guid.NewGuid(),
+                    Text = "کدام عنصر نماد Au دارد؟",
+                    Answers = new List<AnswerDto> {
+                        new() { Id = Guid.NewGuid(), Text = "نقره" },
+                        new() { Id = Guid.NewGuid(), Text = "طلا", IsCorrect = true },
+                        new() { Id = Guid.NewGuid(), Text = "مس" },
+                        new() { Id = Guid.NewGuid(), Text = "آهن" }
+                    }
+                }
+            }
+        };
+    }
+
+    private async Task StartChallenge()
+    {
+        if (challenge == null) return;
+
+        try
+        {
+            questions = await Http.GetFromJsonAsync<List<DailyChallengeQuestionDto>>($"dailychallenges/{challenge.Id}/questions") ?? new();
+        }
+        catch 
+        {
+            // Use mock questions
+            questions = mockQuestions;
+        }
+        
+        if (questions.Any())
+        {
+            totalQuestions = questions.Count;
+            isPlaying = true;
+            LoadNextQuestion();
+        }
+    }
+
+    private void LoadNextQuestion()
+    {
+        if (questions == null || questions.Count == 0 || currentQuestionIndex < 1 || currentQuestionIndex > questions.Count)
+        {
+            currentQuestion = null;
+            return;
+        }
+
+        currentQuestion = questions[currentQuestionIndex - 1];
+        selectedAnswer = null;
+        correctAnswerId = null;
+        hasReactedToCurrentQuestion = false;
+        currentQuestionReaction = null;
+        StartTimer();
+    }
+
+    private void StartTimer()
+    {
+        timeLeft = 15;
+        timer?.Dispose();
+        timer = new Timer(1000);
+        timer.Elapsed += OnTimerTick;
+        timer.Start();
+    }
+
+    private void OnTimerTick(object? sender, ElapsedEventArgs e)
+    {
+        timeLeft--;
+
+        if (timeLeft <= 0)
+        {
+            timer?.Stop();
+            InvokeAsync(() =>
+            {
+                if (selectedAnswer == null)
+                {
+                    SubmitAnswer(null);
+                }
+            });
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SubmitAnswer(Guid? answerId)
+    {
+        if (selectedAnswer != null) return;
+        selectedAnswer = answerId;
+        timer?.Stop();
+
+        var timeSpent = (15 - timeLeft) * 1000;
+
+        // Find correct answer from current question
+        var correct = currentQuestion?.Question.Answers.FirstOrDefault(a => a.IsCorrect);
+        correctAnswerId = correct?.Id;
+        
+        if (answerId == correctAnswerId)
+        {
+            var score = Math.Max(10, 100 - (timeSpent / 100));
+            totalScore += score;
+            correctAnswers++;
+        }
+
+        await Task.Delay(1500);
+        
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex > questions.Count)
+        {
+            // چالش تمام شد - ذخیره و رتبه‌بندی
+            showFinalResult = true;
+            isPlaying = false;
+            currentQuestion = null;
+            StateHasChanged();
+
+            // شبیه‌سازی تاخیر برای محاسبه رتبه
+            await Task.Delay(1800);
+
+            var random = new Random();
+            var myRank = random.Next(3, Math.Min(30, (challenge?.ParticipantsCount ?? 50) / 2));
+            var mockParticipants = challenge?.ParticipantsCount ?? 128;
+
+            AppState.MarkDailyChallengeAsPlayed(totalScore, myRank);
+
+            if (challenge != null)
+            {
+                challenge.HasUserParticipated = true;
+                challenge.UserScore = totalScore;
+                challenge.UserRank = myRank;
+                challenge.ParticipantsCount = mockParticipants;
+            }
+
+            leaderboardResults = GenerateMockLeaderboard(myRank, totalScore);
+            showFinalResult = false;
+            StateHasChanged();
+            return;
+        }
+
+        LoadNextQuestion();
+        StateHasChanged();
+    }
+
+    private string GetAnswerClass(Guid answerId)
+    {
+        if (selectedAnswer == null) return "";
+        
+        if (answerId == correctAnswerId) return "correct";
+        if (answerId == selectedAnswer && answerId != correctAnswerId) return "wrong";
+        
+        return "";
+    }
+
+    private async Task LikeQuestion()
+    {
+        await ReactToQuestion(1);
+    }
+
+    private async Task DislikeQuestion()
+    {
+        await ReactToQuestion(2);
+    }
+
+    private async Task ReportQuestion()
+    {
+        await ReactToQuestion(3);
+    }
+
+    private async Task ReactToQuestion(int reaction)
+    {
+        if (currentQuestion == null || hasReactedToCurrentQuestion) return;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("questions/react", new
+            {
+                UserId = AppState.CurrentUserId,
+                QuestionId = currentQuestion.Question.Id,
+                Reaction = reaction
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                hasReactedToCurrentQuestion = true;
+                currentQuestionReaction = reaction;
+            }
+        }
+        catch { }
+    }
+
+    private async Task LoadLeaderboard()
+    {
+        if (challenge == null) return;
+
+        try
+        {
+            var leaderboard = await Http.GetFromJsonAsync<DailyChallengeLeaderboardDto>($"dailychallenges/{challenge.Id}/leaderboard");
+            if (leaderboard != null)
+            {
+                leaderboardResults = leaderboard.Results;
+                showLeaderboard = true;
+            }
+        }
+        catch
+        {
+            // already loaded as mock
+            showLeaderboard = true;
+        }
+    }
+
+    private List<DailyChallengeResultDto> GenerateMockLeaderboard(int myRank, int myScore)
+    {
+        var random = new Random(42);
+        var names = new[] { "علی رضایی", "سارا احمدی", "محمد کریمی", "فاطمه موسوی", "رضا حسینی",
+                              "مریم صفوی", "امیر جعفری", "زهرا ناصری", "حسین علوی", "مهدی جوادی",
+                              "نیلوفر محمدی", "سهیلا کریمی", "علیرضا باقری", "پریسا هاشمی", "سینا حیدری" };
+        var avatars = new[] { "😎", "🤩", "😊", "😄", "🤗", "🙂", "😀", "😇", "🥳", "😏" };
+
+        var results = new List<DailyChallengeResultDto>();
+        int usedRanks = 0;
+
+        for (int rank = 1; rank <= 15; rank++)
+        {
+            if (rank == myRank)
+            {
+                results.Add(new DailyChallengeResultDto(
+                    AppState.CurrentUserId != Guid.Empty ? AppState.CurrentUserId : Guid.NewGuid(),
+                    AppState.Username ?? "شما",
+                    AppState.AvatarUrl ?? "😎",
+                    0, 0, myScore, rank
+                ));
+            }
+            else
+            {
+                var nameIndex = usedRanks % names.Length;
+                var scoreForRank = Math.Max(10, myScore + (myRank - rank) * random.Next(8, 20));
+                results.Add(new DailyChallengeResultDto(
+                    Guid.NewGuid(),
+                    names[nameIndex],
+                    avatars[nameIndex % avatars.Length],
+                    0, 0, scoreForRank, rank
+                ));
+                usedRanks++;
+            }
+        }
+
+        return results.OrderBy(r => r.Rank).ToList();
+    }
+
+    private string GetRankIcon(int rank) => rank switch
+    {
+        1 => "🥇",
+        2 => "🥈",
+        3 => "🥉",
+        _ => $"#{rank}"
+    };
+
+    private void CloseLeaderboard()
+    {
+        showLeaderboard = false;
+    }
+
+    private void GoHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        timer?.Dispose();
+    }
+
+    public class DailyChallengeDto 
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = "";
+        public DateTime ChallengeDate { get; set; }
+        public int QuestionsCount { get; set; }
+        public int ParticipantsCount { get; set; }
+        public bool HasUserParticipated { get; set; }
+        public int? UserRank { get; set; }
+        public int? UserScore { get; set; }
+    }
+
+    public class DailyChallengeQuestionDto 
+    {
+        public int QuestionOrder { get; set; }
+        public QuestionDto Question { get; set; } = new();
+    }
+
+    public class QuestionDto
+    {
+        public Guid Id { get; set; }
+        public string Text { get; set; } = "";
+        public string? ImageUrl { get; set; }
+        public Guid CategoryId { get; set; }
+        public string CategoryName { get; set; } = "";
+        public int Difficulty { get; set; }
+        public List<AnswerDto> Answers { get; set; } = new();
+    }
+
+    public class AnswerDto
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Text { get; set; } = "";
+        public int OrderIndex { get; set; }
+        public bool IsCorrect { get; set; }
+    }
+
+    public record AnswerResultDto(bool IsCorrect, int Score, Guid CorrectAnswerId);
+
+    public record DailyChallengeLeaderboardDto(List<DailyChallengeResultDto> Results, int TotalParticipants);
+
+    public record DailyChallengeResultDto(
+        Guid UserId, string Username, string AvatarUrl,
+        int CorrectAnswers, int TotalTimeSpent, int Score, int Rank
+    );
+}

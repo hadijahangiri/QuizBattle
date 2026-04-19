@@ -1,0 +1,655 @@
+@page "/group-battle"
+@page "/group-battle/{BattleId:int}"
+@using QuizBattle.Application.DTOs
+@using QuizBattle.Domain.Enums
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject AppState AppState
+
+<div class="group-battle-container">
+    <div class="page-header">
+        <button class="back-btn" @onclick="GoBack">← بازگشت</button>
+        <h2>نبرد گروهی</h2>
+    </div>
+    @if (activeBattle == null)
+    {
+        <div class="no-battle">
+            <div class="battle-icon">⚔️</div>
+            <h2>نبرد گروهی</h2>
+            <p>گروه شما در حال حاضر در نبردی شرکت ندارد</p>
+            
+            @if (isLeader)
+            {
+                <div class="group-selection-panel">
+                    <h4>انتخاب شرکت‌کنندگان</h4>
+                    <p class="text-muted">از اعضای گروه خود کسانی را که می‌خواهید در نبرد شرکت کنند، انتخاب کنید.</p>
+                    <div class="participant-grid">
+                        @foreach (var member in groupMembers)
+                        {
+                            <button class="participant-chip @(selectedParticipantIds.Contains(member.Id) ? "selected" : "")"
+                                    @onclick="() => ToggleParticipant(member.Id)">
+                                <img src="@member.Avatar" class="avatar" />
+                                <div>
+                                    <span>@member.Username</span>
+                                    <span class="participant-role">@member.RoleLabel</span>
+                                </div>
+                            </button>
+                        }
+                    </div>
+                    <div class="selected-count">انتخاب شده: @selectedParticipantIds.Count نفر</div>
+                    <button class="btn btn-primary" @onclick="FindOpponent" disabled="@(!selectedParticipantIds.Any() || isSubmittingBattleRequest)">
+                        @if (isSubmittingBattleRequest)
+                        {
+                            <span>در حال ارسال درخواست...</span>
+                        }
+                        else
+                        {
+                            <span>ارسال درخواست مبارزه</span>
+                        }
+                    </button>
+                    @if (showMatchRequestMessage)
+                    {
+                        <div class="alert alert-info mt-3">@matchRequestMessage</div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="info">فقط رهبر گروه می‌تواند نبرد را شروع کند</p>
+            }
+
+            <div class="battle-history">
+                <h4>تاریخچه نبردها</h4>
+                @foreach (var history in battleHistory)
+                {
+                    <div class="history-item @(history.IsWin ? "win" : "loss")">
+                        <div class="opponent-info">
+                            <img src="@history.OpponentLogo" alt="" class="logo" />
+                            <span>@history.OpponentName</span>
+                        </div>
+                        <div class="score">@history.OurScore - @history.OpponentScore</div>
+                        <div class="result">@(history.IsWin ? "برد" : "باخت")</div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (battlePhase == "matchmaking")
+    {
+        <div class="matchmaking">
+            <div class="matchmaking-animation">
+                <div class="group-preview our">
+                    <img src="@ourGroup?.Logo" alt="" class="logo" />
+                    <span>@ourGroup?.Name</span>
+                </div>
+                <div class="vs-icon">⚔️</div>
+                <div class="group-preview opponent searching">
+                    <div class="spinner"></div>
+                    <span>در حال جستجو...</span>
+                </div>
+            </div>
+            <p>در حال پیدا کردن گروه حریف...</p>
+            <button class="btn btn-secondary" @onclick="CancelSearch">انصراف</button>
+        </div>
+    }
+    else if (battlePhase == "preparation")
+    {
+        <div class="preparation-phase">
+            <div class="battle-header">
+                <div class="group-card our">
+                    <img src="@(ourGroup?.Logo ?? "icon-192.png")" alt="" class="logo" />
+                    <span class="name">@ourGroup?.Name</span>
+                    <span class="members">@ourGroup?.MemberCount عضو</span>
+                </div>
+                <div class="vs-section">
+                    <span class="vs">VS</span>
+                    <div class="countdown">
+                        <span class="time">@prepTimeRemaining</span>
+                        <span class="label">تا شروع نبرد</span>
+                    </div>
+                </div>
+                <div class="group-card opponent">
+                    <img src="@(opponentGroup?.Logo ?? "icon-192.png")" alt="" class="logo" />
+                    <span class="name">@opponentGroup?.Name</span>
+                    <span class="members">@opponentGroup?.MemberCount عضو</span>
+                </div>
+            </div>
+
+            <div class="war-map">
+                <h4>نقشه نبرد</h4>
+                <p>اعضای گروه شما</p>
+                <div class="members-list">
+                    @foreach (var member in activeBattle!.OurMembers)
+                    {
+                        <div class="member-slot @(member.IsReady ? "ready" : "")">
+                            <img src="@member.Avatar" alt="" class="avatar" />
+                            <span class="name">@member.Username</span>
+                            <span class="status">@(member.IsReady ? "آماده ✓" : "در انتظار...")</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (!isUserReady)
+            {
+                <button class="btn btn-primary ready-btn" @onclick="MarkReady">
+                    آماده‌ام!
+                </button>
+            }
+            else
+            {
+                <div class="ready-message">
+                    ✓ شما آماده هستید. منتظر سایر اعضا...
+                </div>
+            }
+        </div>
+    }
+    else if (battlePhase == "battle")
+    {
+        <div class="active-battle">
+            <div class="battle-scoreboard">
+                <div class="team our">
+                    <img src="@(ourGroup?.Logo ?? "icon-192.png")" alt="" class="logo" />
+                    <span class="score">@activeBattle!.OurScore</span>
+                </div>
+                <div class="battle-info">
+                    <span class="time-remaining">@battleTimeRemaining</span>
+                    <span class="round">دور @currentRound از @totalRounds</span>
+                </div>
+                <div class="team opponent">
+                    <img src="@(opponentGroup?.Logo ?? "icon-192.png")" alt="" class="logo" />
+                    <span class="score">@activeBattle!.OpponentScore</span>
+                </div>
+            </div>
+
+            <div class="attack-section">
+                <h4>انتخاب هدف حمله</h4>
+                <div class="targets-grid">
+                    @foreach (var target in activeBattle!.OpponentMembers)
+                    {
+                        <div class="target-card @(target.IsDefeated ? "defeated" : "") @(target.Id == selectedTarget ? "selected" : "")"
+                             @onclick="() => SelectTarget(target.Id)">
+                            <img src="@target.Avatar" alt="" class="avatar" />
+                            <span class="name">@target.Username</span>
+                            <span class="level">سطح @target.Level</span>
+                            <div class="stars">
+                                @for (int i = 0; i < target.StarsLost; i++)
+                                {
+                                    <span class="star lost">⭐</span>
+                                }
+                                @for (int i = target.StarsLost; i < 3; i++)
+                                {
+                                    <span class="star">☆</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (battleQuestion != null)
+            {
+                <div class="question-container battle-question-container">
+                    <div class="question-header">
+                        <h4>سوال نبرد</h4>
+                        <span class="question-note">پیش از حمله، نظر خود را درباره سوال بدهید</span>
+                    </div>
+                    <div class="question">
+                        <p class="question-text">@battleQuestion.Text</p>
+                    </div>
+                    <div class="question-actions">
+                        <button class="action-btn like" @onclick="LikeBattleQuestion" disabled="@hasReactedToBattleQuestion">👍</button>
+                        <button class="action-btn dislike" @onclick="DislikeBattleQuestion" disabled="@hasReactedToBattleQuestion">👎</button>
+                        <button class="action-btn report" @onclick="ReportBattleQuestion" disabled="@hasReactedToBattleQuestion">🚩</button>
+                    </div>
+                    @if (hasReactedToBattleQuestion)
+                    {
+                        <div class="reaction-feedback">
+                            شما به این سوال واکنش دادید: @GetBattleReactionLabel(battleQuestionReaction)
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (selectedTarget != null && !hasAttacked)
+            {
+                <button class="btn btn-primary attack-btn" @onclick="StartAttack">
+                    شروع حمله! ⚔️
+                </button>
+            }
+
+            @if (hasAttacked)
+            {
+                <div class="attack-result">
+                    <h4>نتیجه حمله شما</h4>
+                    <div class="stars-earned">
+                        @for (int i = 0; i < starsEarned; i++)
+                        {
+                            <span class="star">⭐</span>
+                        }
+                    </div>
+                    <p>@starsEarned ستاره کسب کردید!</p>
+                </div>
+            }
+
+            <div class="team-status">
+                <h4>وضعیت تیم ما</h4>
+                <div class="team-grid">
+                    @foreach (var member in activeBattle!.OurMembers)
+                    {
+                        <div class="member-status">
+                            <img src="@member.Avatar" alt="" class="avatar" />
+                            <span class="name">@member.Username</span>
+                            <span class="attacks">@member.AttacksUsed/@member.MaxAttacks حمله</span>
+                            <span class="stars">⭐ @member.StarsEarned</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else if (battlePhase == "results")
+    {
+        <div class="battle-results">
+            <div class="result-header @(activeBattle!.OurScore > activeBattle.OpponentScore ? "win" : "loss")">
+                @if (activeBattle.OurScore > activeBattle.OpponentScore)
+                {
+                    <div class="result-icon">🏆</div>
+                    <h2>پیروزی!</h2>
+                }
+                else if (activeBattle.OurScore < activeBattle.OpponentScore)
+                {
+                    <div class="result-icon">😢</div>
+                    <h2>شکست</h2>
+                }
+                else
+                {
+                    <div class="result-icon">🤝</div>
+                    <h2>مساوی</h2>
+                }
+            </div>
+
+            <div class="final-score">
+                <div class="team our">
+                    <img src="@(ourGroup?.Logo ?? "icon-192.png")" alt="" class="logo" />
+                    <span class="name">@ourGroup?.Name</span>
+                    <span class="score">@activeBattle.OurScore</span>
+                </div>
+                <span class="vs">-</span>
+                <div class="team opponent">
+                    <img src="@(opponentGroup?.Logo ?? "icon-192.png")" alt="" class="logo" />
+                    <span class="name">@opponentGroup?.Name</span>
+                    <span class="score">@activeBattle.OpponentScore</span>
+                </div>
+            </div>
+
+            <div class="rewards">
+                <h4>پاداش‌ها</h4>
+                <div class="reward-items">
+                    <div class="reward">
+                        <span class="icon">🪙</span>
+                        <span class="amount">+@coinsReward</span>
+                    </div>
+                    <div class="reward">
+                        <span class="icon">⭐</span>
+                        <span class="amount">+@xpReward XP</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mvp-section">
+                <h4>بازیکن برتر</h4>
+                <div class="mvp-card">
+                    <img src="@mvpPlayer?.Avatar" alt="" class="avatar" />
+                    <span class="name">@mvpPlayer?.Username</span>
+                    <span class="stats">⭐ @mvpPlayer?.StarsEarned ستاره</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" @onclick="GoBack">
+                بازگشت به گروه
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int? BattleId { get; set; }
+
+    private string battlePhase = "none";
+    private bool isLeader = true;
+    private bool isUserReady = false;
+    private bool hasAttacked = false;
+    private Guid? selectedTarget = null;
+    private int starsEarned = 0;
+    private int currentRound = 1;
+    private int totalRounds = 3;
+    private string prepTimeRemaining = "23:45:12";
+    private string battleTimeRemaining = "01:23:45";
+    private int coinsReward = 500;
+    private int xpReward = 150;
+    private bool hasReactedToBattleQuestion = false;
+    private int? battleQuestionReaction;
+    private BattleQuestion? battleQuestion;
+    private GroupBattleInfo? activeBattle;
+    private GroupInfo? ourGroup;
+    private GroupInfo? opponentGroup;
+    private BattleMember? mvpPlayer;
+    private List<BattleMember> groupMembers = new();
+    private HashSet<Guid> selectedParticipantIds = new();
+    private bool isSubmittingBattleRequest = false;
+    private bool showMatchRequestMessage = false;
+    private string matchRequestMessage = string.Empty;
+
+    private List<BattleHistory> battleHistory = new()
+    {
+        new BattleHistory { OpponentName = "شیران", OpponentLogo = "https://api.dicebear.com/7.x/identicon/svg?seed=lions", OurScore = 45, OpponentScore = 38, IsWin = true },
+        new BattleHistory { OpponentName = "عقاب‌ها", OpponentLogo = "https://api.dicebear.com/7.x/identicon/svg?seed=eagles", OurScore = 32, OpponentScore = 41, IsWin = false },
+        new BattleHistory { OpponentName = "ببرها", OpponentLogo = "https://api.dicebear.com/7.x/identicon/svg?seed=tigers", OurScore = 50, OpponentScore = 35, IsWin = true }
+    };
+
+    protected override void OnInitialized()
+    {
+        ourGroup = new GroupInfo
+        {
+            Id = Guid.NewGuid(),
+            Name = "نوابغ ایران",
+            Logo = "https://api.dicebear.com/7.x/identicon/svg?seed=geniuses",
+            MemberCount = 15
+        };
+
+        groupMembers = new List<BattleMember>
+        {
+            new BattleMember { Id = Guid.NewGuid(), Username = AppState.Username, Avatar = AppState.AvatarUrl ?? "icon-192.png", Level = 29, RoleLabel = "رهبر" },
+            new BattleMember { Id = Guid.NewGuid(), Username = "علی", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=ali", Level = 21, RoleLabel = "دوست" },
+            new BattleMember { Id = Guid.NewGuid(), Username = "سارا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=sara", Level = 18, RoleLabel = "دوست" },
+            new BattleMember { Id = Guid.NewGuid(), Username = "مینا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=mina", Level = 20, RoleLabel = "دوست" },
+            new BattleMember { Id = Guid.NewGuid(), Username = "رضا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=reza", Level = 24, RoleLabel = "دوست" }
+        };
+        selectedParticipantIds = groupMembers.Select(m => m.Id).ToHashSet();
+
+        if (BattleId.HasValue)
+        {
+            LoadBattle(BattleId.Value);
+        }
+    }
+
+    private void LoadBattle(int battleId)
+    {
+        opponentGroup = new GroupInfo
+        {
+            Id = Guid.NewGuid(),
+            Name = "قهرمانان",
+            Logo = "https://api.dicebear.com/7.x/identicon/svg?seed=champions",
+            MemberCount = 12
+        };
+
+        activeBattle = new GroupBattleInfo
+        {
+            Id = Guid.NewGuid(),
+            OurScore = 28,
+            OpponentScore = 24,
+            OurMembers = new List<BattleMember>
+            {
+                new BattleMember { Id = Guid.NewGuid(), Username = AppState.Username, Avatar = AppState.AvatarUrl ?? "icon-192.png", IsReady = true, AttacksUsed = 1, MaxAttacks = 2, StarsEarned = 3 },
+                new BattleMember { Id = Guid.NewGuid(), Username = "علی", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=ali", IsReady = true, AttacksUsed = 2, MaxAttacks = 2, StarsEarned = 5 },
+                new BattleMember { Id = Guid.NewGuid(), Username = "سارا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=sara", IsReady = false, AttacksUsed = 0, MaxAttacks = 2, StarsEarned = 0 }
+            },
+            OpponentMembers = new List<BattleMember>
+            {
+                new BattleMember { Id = Guid.NewGuid(), Username = "رضا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=reza", Level = 15, StarsLost = 2 },
+                new BattleMember { Id = Guid.NewGuid(), Username = "مریم", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=maryam", Level = 12, StarsLost = 3, IsDefeated = true },
+                new BattleMember { Id = Guid.NewGuid(), Username = "حسین", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=hossein", Level = 18, StarsLost = 0 }
+            }
+        };
+        battleQuestion = CreateBattleQuestion();
+        hasReactedToBattleQuestion = false;
+        battleQuestionReaction = null;
+
+        battlePhase = "battle";
+    }
+
+    private void CancelSearch()
+    {
+        battlePhase = "none";
+        activeBattle = null;
+    }
+
+    private void MarkReady()
+    {
+        isUserReady = true;
+        var me = activeBattle?.OurMembers.FirstOrDefault(m => m.Username == AppState.Username);
+        if (me != null) me.IsReady = true;
+    }
+
+    private void ToggleParticipant(Guid userId)
+    {
+        if (selectedParticipantIds.Contains(userId))
+            selectedParticipantIds.Remove(userId);
+        else
+            selectedParticipantIds.Add(userId);
+    }
+
+    private void SelectTarget(Guid targetId)
+    {
+        selectedTarget = targetId;
+    }
+
+    private async Task FindOpponent()
+    {
+        if (!selectedParticipantIds.Any())
+        {
+            showMatchRequestMessage = true;
+            matchRequestMessage = "لطفاً حداقل یک عضو را برای نبرد انتخاب کنید.";
+            return;
+        }
+
+        showMatchRequestMessage = false;
+        isSubmittingBattleRequest = true;
+        battlePhase = "matchmaking";
+        StateHasChanged();
+
+        try
+        {
+            var createDto = new CreateGroupBattleDto(
+                ourGroup?.Id ?? Guid.Empty,
+                AppState.CurrentUserId,
+                selectedParticipantIds.ToList()
+            );
+
+            var response = await Http.PostAsJsonAsync("groupbattles/request", createDto);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<GroupBattleDto>();
+                if (result != null)
+                {
+                    activeBattle = MapBattleFromDto(result);
+                    opponentGroup = new GroupInfo
+                    {
+                        Id = result.Group2Id ?? Guid.NewGuid(),
+                        Name = result.Group2Name ?? "گروه حریف",
+                        Logo = result.Group2LogoUrl ?? "https://api.dicebear.com/7.x/identicon/svg?seed=opponent",
+                        MemberCount = result.PlayersPerTeam
+                    };
+                    ourGroup = new GroupInfo
+                    {
+                        Id = result.Group1Id,
+                        Name = result.Group1Name,
+                        Logo = result.Group1LogoUrl ?? ourGroup?.Logo ?? "https://api.dicebear.com/7.x/identicon/svg?seed=ours",
+                        MemberCount = result.PlayersPerTeam
+                    };
+                    battlePhase = result.Status == GroupBattleStatus.InProgress ? "battle" : "preparation";
+                }
+                else
+                {
+                    battlePhase = "none";
+                }
+            }
+            else
+            {
+                battlePhase = "none";
+                var error = await response.Content.ReadAsStringAsync();
+                showMatchRequestMessage = true;
+                matchRequestMessage = !string.IsNullOrWhiteSpace(error) ? error : "در ارسال درخواست مشکلی پیش آمد.";
+            }
+        }
+        catch
+        {
+            battlePhase = "none";
+            showMatchRequestMessage = true;
+            matchRequestMessage = "در برقراری ارتباط با سرور مشکلی پیش آمد.";
+        }
+        finally
+        {
+            isSubmittingBattleRequest = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task StartAttack()
+    {
+        if (selectedTarget == null) return;
+
+        await Task.Delay(1000);
+        starsEarned = new Random().Next(1, 4);
+        hasAttacked = true;
+        activeBattle!.OurScore += starsEarned;
+
+        var target = activeBattle.OpponentMembers.FirstOrDefault(m => m.Id == selectedTarget);
+        if (target != null)
+        {
+            target.StarsLost = Math.Min(3, target.StarsLost + starsEarned);
+            if (target.StarsLost >= 3) target.IsDefeated = true;
+        }
+
+        selectedTarget = null;
+        StateHasChanged();
+    }
+
+    private async Task LikeBattleQuestion() => await ReactToBattleQuestion(1);
+    private async Task DislikeBattleQuestion() => await ReactToBattleQuestion(2);
+    private async Task ReportBattleQuestion() => await ReactToBattleQuestion(3);
+
+    private async Task ReactToBattleQuestion(int reaction)
+    {
+        if (battleQuestion == null || hasReactedToBattleQuestion) return;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("questions/react", new
+            {
+                UserId = AppState.CurrentUserId,
+                QuestionId = battleQuestion.Id,
+                Reaction = reaction
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                hasReactedToBattleQuestion = true;
+                battleQuestionReaction = reaction;
+            }
+        }
+        catch { }
+    }
+
+    private string GetBattleReactionLabel(int? reaction) => reaction switch
+    {
+        1 => "👍 لایک",
+        2 => "👎 دیسلایک",
+        3 => "🚩 گزارش",
+        _ => ""
+    };
+
+    private BattleQuestion CreateBattleQuestion() => new BattleQuestion
+    {
+        Id = Guid.NewGuid(),
+        Text = "سوال نبرد: این سوال نشان دهنده چالش حمله است. لطفاً نظر خود را با انتخاب یکی از واکنش‌ها ثبت کنید."
+    };
+
+    private void GoBack() => NavigationManager.NavigateTo("/groups");
+
+    private GroupBattleInfo MapBattleFromDto(GroupBattleDto dto)
+    {
+        return new GroupBattleInfo
+        {
+            Id = dto.Id,
+            OurScore = dto.Group1Score,
+            OpponentScore = dto.Group2Score,
+            OurMembers = dto.Players
+                .Where(p => p.IsGroup1)
+                .Select(p => new BattleMember
+                {
+                    Id = p.UserId,
+                    Username = p.Username,
+                    Avatar = p.AvatarUrl,
+                    Level = (int)p.Level,
+                    AttacksUsed = 0,
+                    MaxAttacks = 2,
+                    StarsEarned = p.Score,
+                    IsReady = false
+                })
+                .ToList(),
+            OpponentMembers = dto.Players
+                .Where(p => !p.IsGroup1)
+                .Select(p => new BattleMember
+                {
+                    Id = p.UserId,
+                    Username = p.Username,
+                    Avatar = p.AvatarUrl,
+                    Level = (int)p.Level,
+                    AttacksUsed = 0,
+                    MaxAttacks = 2,
+                    StarsEarned = p.Score,
+                    IsReady = false
+                })
+                .ToList()
+        };
+    }
+
+    private class GroupInfo
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Logo { get; set; } = string.Empty;
+        public int MemberCount { get; set; }
+    }
+
+    private class GroupBattleInfo
+    {
+        public Guid Id { get; set; }
+        public int OurScore { get; set; }
+        public int OpponentScore { get; set; }
+        public List<BattleMember> OurMembers { get; set; } = new();
+        public List<BattleMember> OpponentMembers { get; set; } = new();
+    }
+
+    private class BattleMember
+    {
+        public Guid Id { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Avatar { get; set; } = string.Empty;
+        public int Level { get; set; }
+        public bool IsReady { get; set; }
+        public int AttacksUsed { get; set; }
+        public int MaxAttacks { get; set; } = 2;
+        public int StarsEarned { get; set; }
+        public int StarsLost { get; set; }
+        public bool IsDefeated { get; set; }
+        public string RoleLabel { get; set; } = string.Empty;
+    }
+
+    private class BattleHistory
+    {
+        public string OpponentName { get; set; } = string.Empty;
+        public string OpponentLogo { get; set; } = string.Empty;
+        public int OurScore { get; set; }
+        public int OpponentScore { get; set; }
+        public bool IsWin { get; set; }
+    }
+
+    private class BattleQuestion
+    {
+        public Guid Id { get; set; }
+        public string Text { get; set; } = string.Empty;
+    }
+}

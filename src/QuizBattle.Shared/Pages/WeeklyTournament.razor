@@ -1,0 +1,285 @@
+@page "/weekly-tournament"
+@implements IDisposable
+@inject NavigationManager NavigationManager
+@inject AppState AppState
+
+<div class="tournament-container">
+    <div class="tournament-header">
+        <button class="back-btn" @onclick="GoBack">←</button>
+        <h2>🏆 مسابقات هفتگی</h2>
+        <div class="user-tickets">
+            <span class="ticket-icon">🎟️</span>
+            <span>@AppState.Tickets</span>
+        </div>
+    </div>
+
+    <!-- Tournament Status -->
+    @if (tournamentStatus == TournamentState.NotStarted)
+    {
+        <div class="tournament-upcoming">
+            <div class="trophy-icon">🏆</div>
+            <h3>مسابقه بعدی</h3>
+            <div class="tournament-schedule">
+                <div class="schedule-item">
+                    <span class="label">روز:</span>
+                    <span class="value">@nextTournamentDay</span>
+                </div>
+                <div class="schedule-item">
+                    <span class="label">ساعت:</span>
+                    <span class="value">@nextTournamentTime</span>
+                </div>
+            </div>
+            
+            <div class="countdown-fancy">
+                <div class="countdown-label">زمان باقی‌مانده</div>
+                <div class="countdown-boxes">
+                    <!-- Days (rightmost in RTL) -->
+                    <div class="flip-days-box">
+                        <span class="flip-days-number">@countdownDays</span>
+                        <span class="flip-days-text">روز</span>
+                    </div>
+                    
+                    <span class="flip-sep">:</span>
+                    
+                    <!-- Hours -->
+                    <div class="flip-digit-group">
+                        <div class="countdown-digit">@(countdownHours.ToString("D2")[0])</div>
+                        <div class="countdown-digit">@(countdownHours.ToString("D2")[1])</div>
+                    </div>
+                    
+                    <span class="flip-sep">:</span>
+                    
+                    <!-- Minutes -->
+                    <div class="flip-digit-group">
+                        <div class="countdown-digit">@(countdownMinutes.ToString("D2")[0])</div>
+                        <div class="countdown-digit">@(countdownMinutes.ToString("D2")[1])</div>
+                    </div>
+                    
+                    <span class="flip-sep">:</span>
+                    
+                    <!-- Seconds (leftmost in RTL) -->
+                    <div class="flip-digit-group">
+                        <div class="countdown-digit countdown-digit-animate" @key="@($"s0-{countdownSeconds}")">@(countdownSeconds.ToString("D2")[0])</div>
+                        <div class="countdown-digit countdown-digit-animate" @key="@($"s1-{countdownSeconds}")">@(countdownSeconds.ToString("D2")[1])</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="registration-section">
+                @if (isRegistered)
+                {
+                    <div class="registered-badge">
+                        <span>✅</span>
+                        <span>ثبت‌نام شده</span>
+                    </div>
+                    <p class="register-info">در زمان شروع مسابقه اینجا باشید!</p>
+                }
+                else
+                {
+                    <div class="ticket-cost">
+                        <span>هزینه ورود:</span>
+                        <span class="cost">🎟️ @ticketCost بلیت</span>
+                    </div>
+                    
+                    @if (AppState.Tickets < ticketCost)
+                    {
+                        <p class="insufficient-tickets">بلیت کافی ندارید!</p>
+                        <button class="btn btn-secondary" @onclick="GoToStore">خرید بلیت</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary btn-register" @onclick="RegisterForTournament">
+                            ثبت‌نام در مسابقه
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+    }
+    else if (tournamentStatus == TournamentState.InProgress)
+    {
+        <div class="tournament-live">
+            <div class="live-badge">
+                <span class="pulse"></span>
+                <span>زنده</span>
+            </div>
+            <h3>مسابقه در حال اجرا!</h3>
+            
+            @if (isRegistered && !hasPlayed)
+            {
+                <button class="btn btn-primary btn-large" @onclick="JoinTournament">
+                    ورود به مسابقه
+                </button>
+            }
+            else if (hasPlayed)
+            {
+                <div class="played-info">
+                    <p>شما در این مسابقه شرکت کردید</p>
+                    <div class="your-score">
+                        <span>امتیاز شما:</span>
+                        <span class="score">@playerScore</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p class="not-registered">شما ثبت‌نام نکرده‌اید</p>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="tournament-ended">
+            <h3>مسابقه به پایان رسید</h3>
+            <p>منتظر مسابقه بعدی باشید</p>
+        </div>
+    }
+
+    <!-- Prizes Section -->
+    <div class="prizes-section">
+        <h3>🎁 جوایز</h3>
+        <div class="prizes-list">
+            <div class="prize-item gold">
+                <span class="rank">🥇</span>
+                <span class="prize">5,000 سکه + 10 بلیت</span>
+            </div>
+            <div class="prize-item silver">
+                <span class="rank">🥈</span>
+                <span class="prize">3,000 سکه + 5 بلیت</span>
+            </div>
+            <div class="prize-item bronze">
+                <span class="rank">🥉</span>
+                <span class="prize">1,500 سکه + 3 بلیت</span>
+            </div>
+            <div class="prize-item">
+                <span class="rank">4-10</span>
+                <span class="prize">500 سکه + 1 بلیت</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="leaderboard-section">
+        <h3>🏅 جدول رده‌بندی</h3>
+        @if (leaderboard.Any())
+        {
+            <div class="leaderboard-list">
+                @foreach (var entry in leaderboard)
+                {
+                    <div class="leaderboard-entry @(entry.IsCurrentUser ? "current-user" : "")">
+                        <span class="rank">@entry.Rank</span>
+                        <img src="@entry.Avatar" alt="" class="avatar" />
+                        <span class="name">@entry.Username</span>
+                        <span class="score">@entry.Score</span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="no-data">هنوز نتیجه‌ای ثبت نشده</p>
+        }
+    </div>
+</div>
+
+@code {
+    private enum TournamentState { NotStarted, InProgress, Ended }
+    private TournamentState tournamentStatus = TournamentState.NotStarted;
+    
+    private string nextTournamentDay = "جمعه";
+    private string nextTournamentTime = "20:00";
+    private int ticketCost = 2;
+    
+    private int countdownDays = 0;
+    private int countdownHours = 0;
+    private int countdownMinutes = 0;
+    private int countdownSeconds = 0;
+    private System.Threading.Timer? countdownTimer;
+    
+    private bool isRegistered = false;
+    private bool hasPlayed = false;
+    private int playerScore = 0;
+
+    private List<LeaderboardEntry> leaderboard = new();
+
+    protected override void OnInitialized()
+    {
+        CalculateCountdown();
+        GenerateMockLeaderboard();
+        StartCountdownTimer();
+    }
+
+    private void StartCountdownTimer()
+    {
+        countdownTimer = new System.Threading.Timer(_ =>
+        {
+            CalculateCountdown();
+            InvokeAsync(StateHasChanged);
+        }, null, 0, 1000);
+    }
+
+    private void CalculateCountdown()
+    {
+        // Next Friday 20:00
+        var now = DateTime.Now;
+        var daysUntilFriday = ((int)DayOfWeek.Friday - (int)now.DayOfWeek + 7) % 7;
+        if (daysUntilFriday == 0 && now.Hour >= 20) daysUntilFriday = 7;
+        
+        var nextTournament = now.Date.AddDays(daysUntilFriday).AddHours(20);
+        var timeLeft = nextTournament - now;
+        
+        countdownDays = Math.Max(0, timeLeft.Days);
+        countdownHours = Math.Max(0, timeLeft.Hours);
+        countdownMinutes = Math.Max(0, timeLeft.Minutes);
+        countdownSeconds = Math.Max(0, timeLeft.Seconds);
+    }
+
+    public void Dispose()
+    {
+        countdownTimer?.Dispose();
+    }
+
+    private void GenerateMockLeaderboard()
+    {
+        var names = new[] { "علی", "رضا", "مریم", "سارا", "محمد", "زهرا", "امیر", "فاطمه", "حسین", "مینا" };
+        var random = new Random(42);
+        
+        leaderboard = names.Select((name, index) => new LeaderboardEntry
+        {
+            Rank = index + 1,
+            Username = name,
+            Avatar = $"https://api.dicebear.com/7.x/avataaars/svg?seed={name}",
+            Score = 1000 - index * 50 + random.Next(-20, 20),
+            IsCurrentUser = index == 4
+        }).ToList();
+    }
+
+    private void GoBack() => NavigationManager.NavigateTo("/");
+    
+    private void GoToStore() => NavigationManager.NavigateTo("/store");
+
+    private void RegisterForTournament()
+    {
+        if (AppState.Tickets >= ticketCost)
+        {
+            AppState.Tickets -= ticketCost;
+            isRegistered = true;
+            StateHasChanged();
+        }
+    }
+
+    private void JoinTournament()
+    {
+        // Navigate to tournament gameplay
+        NavigationManager.NavigateTo("/gameplay?mode=tournament");
+    }
+
+    private class LeaderboardEntry
+    {
+        public int Rank { get; set; }
+        public string Username { get; set; } = "";
+        public string Avatar { get; set; } = "";
+        public int Score { get; set; }
+        public bool IsCurrentUser { get; set; }
+    }
+}

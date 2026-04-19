@@ -1,0 +1,113 @@
+@using Microsoft.AspNetCore.Components
+
+<div class="tutorial-container">
+    <div class="tutorial-step">
+        @switch (currentStep)
+        {
+            case 1:
+                <div class="tutorial-content">
+                    <div class="tutorial-icon">⚔️</div>
+                    <h3>جنگ تن به تن</h3>
+                    <p>با دوستان خود رقابت کنید! هر بازی شامل 6 راند است و هر راند 3 سوال دارد.</p>
+                </div>
+                break;
+
+            case 2:
+                <div class="tutorial-content">
+                    <div class="tutorial-icon">🎯</div>
+                    <h3>انتخاب موضوع</h3>
+                    <p>در هر راند، یکی از بازیکنان موضوع سوالات را از بین 4 گزینه انتخاب می‌کند.</p>
+                </div>
+                break;
+
+            case 3:
+                <div class="tutorial-content">
+                    <div class="tutorial-icon">⏱️</div>
+                    <h3>زمان پاسخگویی</h3>
+                    <p>هر سوال 15 ثانیه زمان دارد. هرچه سریع‌تر جواب دهید، امتیاز بیشتری می‌گیرید!</p>
+                </div>
+                break;
+
+            case 4:
+                <div class="tutorial-content">
+                    <div class="tutorial-icon">🎁</div>
+                    <h3>کمکی‌ها</h3>
+                    <p>سه کمکی داریm: حذف دو گزینه، دو پاسخ، و افزایش زمان. با سکه می‌توانید از آنها استفاده کنید.</p>
+                </div>
+                break;
+
+            case 5:
+                <div class="tutorial-content">
+                    <div class="tutorial-icon">📅</div>
+                    <h3>چالش روزانه</h3>
+                    <p>هر روز 10 سوال منتشر می‌شود. هرچه سریع‌تر و درست‌تر جواب دهید، رتبه بهتری می‌گیرید!</p>
+                </div>
+                break;
+
+            case 6:
+                <div class="tutorial-content">
+                    <div class="tutorial-icon">👥</div>
+                    <h3>مبارزه گروهی</h3>
+                    <p>گروه بسازید و با گروه‌های دیگر رقابت کنید! مانند کلش آف کلنز!</p>
+                </div>
+                break;
+
+            case 7:
+                <div class="tutorial-content">
+                    <div class="tutorial-icon">🎉</div>
+                    <h3>پاداش روزانه</h3>
+                    <p>هر روز وارد شوید و سکه رایگان بگیرید! پاداش هر روز بیشتر می‌شود.</p>
+                </div>
+                break;
+        }
+    </div>
+
+    <div class="tutorial-progress">
+        @for (int i = 1; i <= totalSteps; i++)
+        {
+            var step = i;
+            <div class="progress-dot @(step <= currentStep ? "active" : "")"></div>
+        }
+    </div>
+
+    <div class="tutorial-buttons">
+        @if (currentStep > 1)
+        {
+            <button class="btn btn-secondary" @onclick="PreviousStep">قبلی</button>
+        }
+
+        @if (currentStep < totalSteps)
+        {
+            <button class="btn btn-primary" @onclick="NextStep">بعدی</button>
+        }
+        else
+        {
+            <button class="btn btn-primary" @onclick="Complete">شروع بازی!</button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback OnComplete { get; set; }
+
+    private int currentStep = 1;
+    private int totalSteps = 7;
+
+    private void NextStep()
+    {
+        if (currentStep < totalSteps)
+            currentStep++;
+    }
+
+    private void PreviousStep()
+    {
+        if (currentStep > 1)
+            currentStep--;
+    }
+
+    private async Task Complete()
+    {
+        await OnComplete.InvokeAsync();
+    }
+}

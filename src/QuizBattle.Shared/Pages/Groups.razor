@@ -1,0 +1,578 @@
+@page "/groups"
+@page "/groups/{GroupId:guid}"
+@using QuizBattle.Application.DTOs
+@using QuizBattle.Domain.Enums
+@inject HttpClient Http
+@inject AppState AppState
+@inject NavigationManager Navigation
+
+<div class="groups-container">
+    @if (isLoading)
+    {
+        <div class="loading"><div class="spinner"></div></div>
+    }
+    else if (selectedGroupId == null)
+    {
+        <div class="groups-list">
+            <div class="groups-page-header">
+                <button class="back-btn" @onclick='() => Navigation.NavigateTo("/")'>→</button>
+                <h2 class="groups-page-title">جستجوی گروه</h2>
+                <div style="width:40px"></div>
+            </div>
+
+            <div class="groups-search-bar">
+                <input type="text" @bind="searchQuery" placeholder="نام یا کد گروه..." />
+                <button class="btn btn-primary" @onclick="SearchGroups">جستجو</button>
+            </div>
+
+            <div class="groups-action-row">
+                <button class="groups-action-btn groups-action-primary" @onclick="ShowCreateGroup">
+                    <span>➕</span>
+                    <span>ساخت گروه</span>
+                </button>
+                <button class="groups-action-btn groups-action-secondary" @onclick="LoadTopGroups">
+                    <span>⭐</span>
+                    <span>گروه‌های برتر</span>
+                </button>
+            </div>
+
+            <div class="groups-section">
+                <h4 class="groups-section-title">گروه‌های برتر</h4>
+                @if (searchResults.Any())
+                {
+                    @foreach (var group in searchResults)
+                    {
+                        <div class="group-card">
+                            <img src="@(group.LogoUrl ?? "images/default-group.png")" class="group-logo" />
+                            <div class="group-info">
+                                <span class="name">@group.Name</span>
+                                <span class="members">👥 @group.MembersCount عضو</span>
+                                <span class="score">🏆 @group.TotalScore</span>
+                            </div>
+                            <button class="btn btn-outline-light btn-sm"
+                                    disabled="@IsGroupJoinDisabled(group)"
+                                    @onclick="() => RequestMembership(group.Id)">
+                                @GetMembershipButtonText(group)
+                            </button>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="groups-empty">
+                        <div class="groups-empty-icon">🔎</div>
+                        <p class="groups-empty-text">گروهی پیدا نشد</p>
+                        <p class="groups-empty-sub">اسمی را جستجو کنید یا لیست گروه‌های برتر را ببینید.</p>
+                    </div>
+                }
+            </div>
+
+            <div class="groups-section">
+                <h4 class="groups-section-title">گروه‌های من</h4>
+                @if (myGroups.Any())
+                {
+                    @foreach (var group in myGroups)
+                    {
+                        <div class="group-card-row" @onclick="() => SelectGroup(group.Id)">
+                            <img src="@(group.LogoUrl ?? "images/default-group.png")" class="group-card-logo" />
+                            <div class="group-card-info">
+                                <span class="group-card-name">@group.Name</span>
+                                <span class="group-card-meta">👥 @group.MembersCount عضو &nbsp;·&nbsp; 🏆 @group.TotalScore</span>
+                            </div>
+                            <span class="group-card-arrow">‹</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="groups-empty">
+                        <div class="groups-empty-icon">🏰</div>
+                        <p class="groups-empty-text">هنوز عضو هیچ گروهی نیستید</p>
+                        <p class="groups-empty-sub">یک گروه بسازید یا به گروه دیگران بپیوندید</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (selectedGroup != null)
+    {
+        <div class="group-detail">
+            <div class="group-header">
+                <button class="back-btn" @onclick="BackToList">←</button>
+                <img src="@(selectedGroup.LogoUrl ?? "images/default-group.png")" class="logo" />
+                <div class="info">
+                    <h2>@selectedGroup.Name</h2>
+                    <span>👥 @selectedGroup.MembersCount | 🏆 @selectedGroup.TotalScore</span>
+                </div>
+            </div>
+
+            <div class="group-tabs">
+                <button class="tab @(activeTab == "chat" ? "active" : "")" @onclick='() => activeTab = "chat"'>💬 چت</button>
+                <button class="tab @(activeTab == "members" ? "active" : "")" @onclick='() => activeTab = "members"'>👥 اعضا</button>
+                @if (isOwner)
+                {
+                    <button class="tab @(activeTab == "groupBattle" ? "active" : "")" @onclick='() => activeTab = "groupBattle"'>⚔️ مبارزه گروهی</button>
+                    <button class="tab @(activeTab == "requests" ? "active" : "")" @onclick="LoadRequests">📩 درخواست‌ها</button>
+                    <button class="tab @(activeTab == "settings" ? "active" : "")" @onclick='() => activeTab = "settings"'>⚙️ تنظیمات</button>
+                }
+            </div>
+
+            @if (activeTab == "chat")
+            {
+                <div class="chat-section">
+                    @if (selectedGroup.IsChatEnabled)
+                    {
+                        <div class="chat-messages">
+                            @foreach (var msg in chatMessages)
+                            {
+                                <div class="message @(msg.SenderId == AppState.CurrentUserId ? "mine" : "")">
+                                    <img src="@msg.SenderAvatarUrl" class="avatar" />
+                                    <div class="content">
+                                        <span class="sender">@msg.SenderUsername</span>
+                                        <p>@msg.Message</p>
+                                        <span class="time">@msg.SentAt.ToString("HH:mm")</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" @bind="newMessage" placeholder="پیام خود را بنویسید..." />
+                            <button @onclick="SendMessage">ارسال</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="chat-disabled">چت در این گروه غیرفعال است</p>
+                    }
+                </div>
+            }
+            else if (activeTab == "members")
+            {
+                <div class="members-section">
+                    @foreach (var member in members)
+                    {
+                        <div class="member-card">
+                            <img src="@member.AvatarUrl" />
+                            <div class="info">
+                                <span class="username">@member.Username</span>
+                                <span class="role">@GetRoleName(member.Role)</span>
+                            </div>
+                            @if (isOwner && member.UserId != AppState.CurrentUserId)
+                            {
+                                <button class="kick-btn" @onclick="() => KickMember(member.UserId)">اخراج</button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else if (activeTab == "requests" && isOwner)
+            {
+                <div class="requests-section">
+                    @if (membershipRequests.Any())
+                    {
+                        @foreach (var req in membershipRequests)
+                        {
+                            <div class="request-card">
+                                <img src="@req.AvatarUrl" />
+                                <div class="info">
+                                    <span class="username">@req.Username</span>
+                                    <span class="level">سطح @req.Level</span>
+                                </div>
+                                <div class="actions">
+                                    <button class="approve" @onclick="() => ApproveRequest(req.Id)">✓</button>
+                                    <button class="reject" @onclick="() => RejectRequest(req.Id)">✗</button>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>درخواست عضویتی وجود ندارد</p>
+                    }
+                </div>
+            }
+            else if (activeTab == "groupBattle" && isOwner)
+            {
+                <div class="group-battle-section">
+                    <h3>ارسال درخواست مبارزه گروهی</h3>
+                    <p>از اعضای گروه خود کسانی را که می‌خواهید برای مبارزه انتخاب کنید.</p>
+                    <div class="battle-members-grid">
+                        @foreach (var member in members)
+                        {
+                            <button class="participant-chip @(selectedBattleParticipants.Contains(member.UserId) ? "selected" : "")"
+                                    @onclick="() => ToggleBattleParticipant(member.UserId)">
+                                <img src="@member.AvatarUrl" />
+                                <div>
+                                    <span>@member.Username</span>
+                                    <span class="role">@GetRoleName(member.Role)</span>
+                                </div>
+                            </button>
+                        }
+                    </div>
+                    <div class="battle-action-row">
+                        <span>انتخاب شده: @selectedBattleParticipants.Count نفر</span>
+                        <button class="btn btn-primary" @onclick="SendGroupBattleRequest" disabled="@(!selectedBattleParticipants.Any() || isSubmittingGroupBattleRequest)">
+                            @if (isSubmittingGroupBattleRequest)
+                            {
+                                <span>در حال ارسال...</span>
+                            }
+                            else
+                            {
+                                <span>ارسال درخواست مبارزه</span>
+                            }
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(groupBattleMessage))
+                    {
+                        <div class="alert alert-info">@groupBattleMessage</div>
+                    }
+                </div>
+            }
+            else if (activeTab == "settings" && isOwner)
+            {
+                <div class="settings-section">
+                    <div class="setting-item">
+                        <span>چت گروه</span>
+                        <button @onclick="ToggleChat">@(selectedGroup.IsChatEnabled ? "غیرفعال کردن" : "فعال کردن")</button>
+                    </div>
+                    <div class="setting-item">
+                        <span>لینک دعوت</span>
+                        <input type="text" value="@selectedGroup.InviteLink" readonly />
+                    </div>
+                    <button class="btn btn-danger" @onclick="DeleteGroup">حذف گروه</button>
+                </div>
+            }
+        </div>
+    }
+
+    @if (showCreateModal)
+    {
+        <div class="cg-overlay" @onclick="() => showCreateModal = false">
+            <div class="cg-sheet" @onclick:stopPropagation="true">
+                <div class="cg-header">
+                    <button class="cg-close" @onclick="() => showCreateModal = false">✕</button>
+                    <div class="cg-title-row">
+                        <span class="cg-icon">🏰</span>
+                        <h3 class="cg-title">ساخت گروه جدید</h3>
+                    </div>
+                </div>
+                <div class="cg-body">
+                    <div class="cg-field">
+                        <label class="cg-label">نام گروه</label>
+                        <input class="cg-input" type="text" @bind="newGroupName"
+                               placeholder="مثلاً: نوابغ ایران" maxlength="30" />
+                    </div>
+
+                    <div class="cg-field">
+                        <label class="cg-label">توضیحات <span class="cg-optional">(اختیاری)</span></label>
+                        <textarea class="cg-input cg-textarea" @bind="newGroupDescription"
+                                  placeholder="درباره گروه بنویسید..." rows="3" maxlength="200"></textarea>
+                    </div>
+
+                    <div class="cg-field">
+                        <label class="cg-label">نوع گروه</label>
+                        <div class="cg-type-row">
+                            <button class="cg-type-btn @(isPublicGroup ? "selected" : "")"
+                                    @onclick="() => isPublicGroup = true">
+                                <span>🌐</span>
+                                <span>عمومی</span>
+                            </button>
+                            <button class="cg-type-btn @(!isPublicGroup ? "selected" : "")"
+                                    @onclick="() => isPublicGroup = false">
+                                <span>🔒</span>
+                                <span>خصوصی</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cg-footer">
+                    <button class="btn btn-secondary cg-btn" @onclick="() => showCreateModal = false">انصراف</button>
+                    <button class="btn btn-primary cg-btn"
+                            disabled="@string.IsNullOrWhiteSpace(newGroupName)"
+                            @onclick="CreateGroup">
+                        ✔ ایجاد گروه
+                    </button>
+                </div>
+                @if (!string.IsNullOrEmpty(groupCreationError))
+                {
+                    <div class="error-message mt-3">@groupCreationError</div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid? GroupId { get; set; }
+
+    private List<GroupDto> myGroups = new();
+    private GroupDto? selectedGroup;
+    private Guid? selectedGroupId;
+    private List<GroupMemberDto> members = new();
+    private List<GroupChatMessageDto> chatMessages = new();
+    private List<MembershipRequestDto> membershipRequests = new();
+    private List<GroupDto> searchResults = new();
+
+    private HashSet<Guid> membershipRequestsSent = new();
+    private HashSet<Guid> myGroupIds = new();
+    private HashSet<Guid> selectedBattleParticipants = new();
+    private bool isSubmittingGroupBattleRequest = false;
+    private string groupBattleMessage = string.Empty;
+
+    private bool isLoading = true;
+    private bool isOwner = false;
+    private string activeTab = "chat";
+    private string newMessage = "";
+
+    private bool showCreateModal = false;
+    private string newGroupName = "";
+    private string newGroupDescription = "";
+    private bool isPublicGroup = true;
+    private string searchQuery = "";
+    private string groupCreationError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        selectedGroupId = GroupId;
+        await LoadGroups();
+        await LoadTopGroups();
+        
+        if (selectedGroupId.HasValue)
+        {
+            await LoadGroupDetail(selectedGroupId.Value);
+        }
+    }
+
+    private async Task LoadGroups()
+    {
+        isLoading = true;
+        try
+        {
+            myGroups = await Http.GetFromJsonAsync<List<GroupDto>>($"groups/user/{AppState.CurrentUserId}") ?? new();
+            myGroupIds = myGroups.Select(g => g.Id).ToHashSet();
+        }
+        catch { }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadTopGroups()
+    {
+        searchQuery = string.Empty;
+        await SearchGroups();
+    }
+
+    private async Task SelectGroup(Guid id)
+    {
+        await LoadGroupDetail(id);
+    }
+
+    private async Task LoadGroupDetail(Guid id)
+    {
+        selectedGroupId = id;
+        selectedGroup = await Http.GetFromJsonAsync<GroupDto>($"groups/{id}");
+        isOwner = selectedGroup?.OwnerId == AppState.CurrentUserId;
+        
+        await LoadMembers();
+        await LoadChat();
+    }
+
+    private async Task LoadMembers()
+    {
+        members = await Http.GetFromJsonAsync<List<GroupMemberDto>>($"groups/{selectedGroupId}/members") ?? new();
+        selectedBattleParticipants = members.Select(m => m.UserId).ToHashSet();
+    }
+
+    private async Task LoadChat()
+    {
+        chatMessages = await Http.GetFromJsonAsync<List<GroupChatMessageDto>>($"groups/{selectedGroupId}/chat") ?? new();
+    }
+
+    private async Task LoadRequests()
+    {
+        activeTab = "requests";
+        membershipRequests = await Http.GetFromJsonAsync<List<MembershipRequestDto>>($"groups/{selectedGroupId}/membership-requests?userId={AppState.CurrentUserId}") ?? new();
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrEmpty(newMessage)) return;
+
+        var response = await Http.PostAsJsonAsync("groups/chat", new
+        {
+            UserId = AppState.CurrentUserId,
+            Data = new { GroupId = selectedGroupId, Message = newMessage }
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            newMessage = "";
+            await LoadChat();
+        }
+    }
+
+    private async Task KickMember(Guid memberId)
+    {
+        await Http.PostAsync($"groups/{selectedGroupId}/kick/{memberId}?kickerId={AppState.CurrentUserId}", null);
+        await LoadMembers();
+    }
+
+    private async Task ApproveRequest(Guid requestId)
+    {
+        await Http.PostAsync($"groups/membership-requests/{requestId}/approve?approverId={AppState.CurrentUserId}", null);
+        await LoadRequests();
+    }
+
+    private async Task RejectRequest(Guid requestId)
+    {
+        await Http.PostAsync($"groups/membership-requests/{requestId}/reject?approverId={AppState.CurrentUserId}", null);
+        await LoadRequests();
+    }
+
+    private async Task ToggleChat()
+    {
+        await Http.PostAsJsonAsync($"groups/{selectedGroupId}/toggle-chat", new
+        {
+            UserId = AppState.CurrentUserId,
+            Enabled = !selectedGroup!.IsChatEnabled
+        });
+        await LoadGroupDetail(selectedGroupId!.Value);
+    }
+
+    private async Task DeleteGroup()
+    {
+        await Http.DeleteAsync($"groups/{selectedGroupId}?userId={AppState.CurrentUserId}");
+        await LoadGroups();
+        BackToList();
+    }
+
+    private void BackToList()
+    {
+        selectedGroupId = null;
+        selectedGroup = null;
+    }
+
+    private void ShowCreateGroup() => showCreateModal = true;
+
+    private async Task CreateGroup()
+    {
+        groupCreationError = string.Empty;
+
+        var response = await Http.PostAsJsonAsync("groups", new
+        {
+            OwnerId = AppState.CurrentUserId,
+            Data = new { Name = newGroupName, Description = newGroupDescription }
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            showCreateModal = false;
+            newGroupName = "";
+            newGroupDescription = "";
+            await LoadGroups();
+            await LoadTopGroups();
+        }
+        else
+        {
+            groupCreationError = await response.Content.ReadAsStringAsync() ?? "خطا در ایجاد گروه";
+        }
+    }
+
+    private async Task SearchGroups()
+    {
+        var uri = $"groups/search?Page=1&PageSize=100";
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            uri += $"&Query={Uri.EscapeDataString(searchQuery)}";
+        }
+
+        searchResults = (await Http.GetFromJsonAsync<PaginatedResult<GroupDto>>(uri))?.Items ?? new();
+    }
+
+    private async Task RequestMembership(Guid groupId)
+    {
+        var response = await Http.PostAsJsonAsync($"groups/{groupId}/request-membership", new
+        {
+            UserId = AppState.CurrentUserId
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            membershipRequestsSent.Add(groupId);
+        }
+    }
+
+    private string GetRoleName(GroupRole role) => role switch
+    {
+        GroupRole.Member => "عضو",
+        GroupRole.Admin => "مدیر",
+        GroupRole.Owner => "مالک",
+        _ => ""
+    };
+
+    private bool IsGroupJoinDisabled(GroupDto group)
+    {
+        return myGroupIds.Contains(group.Id) || membershipRequestsSent.Contains(group.Id);
+    }
+
+    private string GetMembershipButtonText(GroupDto group)
+    {
+        if (myGroupIds.Contains(group.Id))
+            return "عضو هستید";
+        if (membershipRequestsSent.Contains(group.Id))
+            return "درخواست ارسال شد";
+        return "درخواست عضویت";
+    }
+
+    private void ToggleBattleParticipant(Guid userId)
+    {
+        if (selectedBattleParticipants.Contains(userId))
+            selectedBattleParticipants.Remove(userId);
+        else
+            selectedBattleParticipants.Add(userId);
+    }
+
+    private async Task SendGroupBattleRequest()
+    {
+        if (!selectedGroupId.HasValue)
+            return;
+
+        isSubmittingGroupBattleRequest = true;
+        groupBattleMessage = string.Empty;
+
+        try
+        {
+            var dto = new CreateGroupBattleDto(
+                selectedGroupId.Value,
+                AppState.CurrentUserId,
+                selectedBattleParticipants.ToList()
+            );
+
+            var response = await Http.PostAsJsonAsync("groupbattles/request", dto);
+            if (response.IsSuccessStatusCode)
+            {
+                groupBattleMessage = "درخواست مبارزه با موفقیت ارسال شد.";
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                groupBattleMessage = !string.IsNullOrWhiteSpace(error)
+                    ? error
+                    : "خطا در ارسال درخواست مبارزه.";
+            }
+        }
+        catch
+        {
+            groupBattleMessage = "ارتباط با سرور برقرار نشد.";
+        }
+        finally
+        {
+            isSubmittingGroupBattleRequest = false;
+        }
+    }
+
+    private record PaginatedResult<T>(List<T> Items, int TotalCount, int Page, int PageSize, int TotalPages);
+}

@@ -1,0 +1,567 @@
+@page "/battle"
+@page "/battle/{GameId:guid}"
+@using System.Net.Http.Json
+@using System.Timers
+@implements IDisposable
+@inject HttpClient Http
+@inject AppState AppState
+@inject NavigationManager Navigation
+
+<div class="battle-container">
+    
+    @if (isLoading)
+    {
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>در حال بارگذاری...</p>
+        </div>
+    }
+    else if (isSearchingOpponent)
+    {
+        <div class="matchmaking-screen">
+            @if (opponentNotFound)
+            {
+                <!-- حریف یافت نشد - همان صفحه -->
+                <div class="search-not-found-icon">😔</div>
+                <h2 class="search-not-found-title">حریفی پیدا نشد</h2>
+                <p class="search-not-found-msg">در حال حاضر بازیکن آنلاینی در صف نیست.</p>
+                <div class="no-opponent-hero-row">
+                    <div class="no-opponent-warrior no-opponent-warrior-left">🤺</div>
+                    <div class="no-opponent-vs">VS</div>
+                    <div class="no-opponent-warrior no-opponent-warrior-right">🤺</div>
+                </div>
+                <div class="search-not-found-actions">
+                    <button class="btn btn-primary btn-large" @onclick="StartRandomGame">🔍 جستجوی مجدد</button>
+                    <button class="btn btn-secondary btn-large" @onclick="BackToMenu">بازگشت به منو</button>
+                </div>
+            }
+            else
+            {
+                <h2>در جستجوی حریف...</h2>
+                
+                <div class="search-visual">
+                    <div class="search-card">
+                        <span class="search-icon search-icon-animated">🔍</span>
+                    </div>
+                </div>
+                
+                <div class="search-info">
+                    <div class="search-timer">@FormatTime(searchTime)</div>
+                    <p>در صف انتظار مانده و حریف را جستجو می‌کنیم.</p>
+                    <p class="search-note">حداکثر ۱ دقیقه در صف می‌مانید.</p>
+                    <div class="search-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                </div>
+                
+                <button class="btn btn-secondary btn-cancel" @onclick="CancelSearch">انصراف</button>
+            }
+        </div>
+    }
+    else if (gameId == null)
+    {
+        <!-- صفحه نبرد تن به تن -->
+        <div class="battle-menu">
+            <div class="battle-home-panel">
+                <div class="battle-topbar">
+                    <div class="title-section">
+                        <span class="battle-logo">Quiz of Battle</span>
+                        <span class="battle-subtitle">نبرد تن به تن</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3>🎮 بازی‌های فعال (@activeGames.Count/10)</h3>
+                @if (activeGames.Any())
+                {
+                    <div class="active-games-list">
+                        @foreach (var game in activeGames)
+                        {
+                            <div class="game-card" @onclick="@(() => OpenGame(game.Id))">
+                                <div class="game-row">
+                                    <div class="player-block">
+                                        <div class="avatar-circle">@GetOpponentAvatar(game)</div>
+                                        <div class="player-info">
+                                            <div class="player-name">@GetOpponentName(game)</div>
+                                            <div class="player-level">سطح @GetOpponentLevel(game)</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="game-summary">
+                                        <div class="game-result">نتیجه: @GetGameResult(game)</div>
+                                        <div class="game-turn">وضعیت: @GetGameTurnStatus(game)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state-box">
+                        <span class="empty-icon">🎯</span>
+                        <p>بازی فعالی ندارید</p>
+                    </div>
+                }
+            </div>
+
+            <div class="section-card">
+                <h3>🔍 جستجوی کاربر</h3>
+                <div class="search-box">
+                    <input type="text" @bind="searchQuery" @bind:event="oninput"
+                           @onkeypress="OnSearchKeyPress" placeholder="نام کاربر را وارد کنید..." />
+                    <button class="btn btn-primary" @onclick="SearchUsers">جستجو</button>
+                </div>
+
+                @if (searchResults.Any())
+                {
+                    <div class="search-results">
+                        @foreach (var user in searchResults)
+                        {
+                            <div class="user-card" @onclick="@(() => ChallengeUser(user.Id))">
+                                <div class="avatar-circle" style="background: @GetRandomColor(user.Username);">@user.AvatarUrl</div>
+                                <div class="user-info">
+                                    <span class="username">@user.Username</span>
+                                    <span class="level">🏆 سطح @user.Level</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else if (hasSearched)
+                {
+                    <p class="empty-state">کاربری با این نام یافت نشد</p>
+                }
+            </div>
+
+            <div class="random-game-section">
+                <div class="divider-text">یا</div>
+                <button class="btn btn-primary btn-large btn-random" @onclick="StartRandomGame">
+                    <span class="btn-icon">🎲</span>
+                    <span class="btn-text">بازی با حریف تصادفی</span>
+                </button>
+                <p class="random-hint">به صف انتظار می‌روید و با اولین حریف آنلاین بازی می‌کنید</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- نمایش بازی -->
+        <GamePlay GameId="@gameId.Value" OnGameEnd="@LoadActiveGames" />
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Guid? GameId { get; set; }
+
+    private Guid? gameId;
+    private bool isLoading = true;
+    private bool hasSearched = false;
+    private bool isSearchingOpponent = false;
+    private bool opponentNotFound = false;
+    private int searchTime = 0;
+    private Timer? searchTimer;
+    private int targetSearchTime = 0;
+    private string activeBattleTab = "competition";
+    private List<GameDto> activeGames = new();
+    private string searchQuery = "";
+    private List<UserProfileDto> searchResults = new();
+    
+    private string[] mockNames = { "علی", "محمد", "سارا", "زهرا", "رضا", "فاطمه", "امیر", "مریم", "حسین", "مهدی" };
+    private string[] mockAvatars = { "😎", "🤩", "😊", "😄", "🤗", "🙂", "😀", "😇", "🥳", "😏" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        gameId = GameId;
+        await LoadActiveGames();
+    }
+
+    private async Task LoadActiveGames()
+    {
+        isLoading = true;
+        try
+        {
+            var response = await Http.GetFromJsonAsync<List<GameDto>>("games/my/active");
+            activeGames = response ?? new();
+        }
+        catch 
+        { 
+            activeGames = new();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        if (AppState.CurrentUserId == Guid.Empty)
+        {
+            AppState.CurrentUserId = Guid.NewGuid();
+            AppState.IsGuest = true;
+            AppState.NotifyStateChanged();
+        }
+        return AppState.CurrentUserId;
+    }
+    
+    private void GoHome()
+    {
+        if (isSearchingOpponent)
+        {
+            CancelSearch();
+        }
+        Navigation.NavigateTo("/");
+    }
+    
+    private void BackToMenu()
+    {
+        opponentNotFound = false;
+        StateHasChanged();
+    }
+
+    private void OpenGame(Guid id)
+    {
+        gameId = id;
+        StateHasChanged();
+    }
+
+    private void SetBattleTab(string tab)
+    {
+        activeBattleTab = tab;
+    }
+
+    private string GetBattleOpponentName()
+    {
+        var game = activeGames.FirstOrDefault();
+        if (game == null) return "حریف";
+        return game.Player1Id == GetCurrentUserId() ? game.Player2Username : game.Player1Username;
+    }
+
+    private string GetBattleOpponentAvatar()
+    {
+        var game = activeGames.FirstOrDefault();
+        if (game == null) return "🤺";
+        return game.Player1Id == GetCurrentUserId() ? game.Player2AvatarUrl : game.Player1AvatarUrl;
+    }
+
+    private int GetBattleOpponentLevel()
+    {
+        return 1;
+    }
+
+    private string GetOpponentName(GameDto game)
+    {
+        return game.Player1Id == GetCurrentUserId() ? game.Player2Username : game.Player1Username;
+    }
+
+    private string GetOpponentAvatar(GameDto game)
+    {
+        return game.Player1Id == GetCurrentUserId() ? game.Player2AvatarUrl : game.Player1AvatarUrl;
+    }
+
+    private int GetOpponentLevel(GameDto game)
+    {
+        return 1;
+    }
+
+    private string GetGameResult(GameDto game)
+    {
+        var myScore = game.Player1Id == GetCurrentUserId() ? game.Player1Score : game.Player2Score;
+        var opponentScore = game.Player1Id == GetCurrentUserId() ? game.Player2Score : game.Player1Score;
+        return $"{myScore} - {opponentScore}";
+    }
+
+    private string GetGameTurnStatus(GameDto game)
+    {
+        var isOddRound = game.CurrentRound % 2 == 1;
+        var isPlayer1 = game.Player1Id == GetCurrentUserId();
+        var myTurn = (isOddRound && isPlayer1) || (!isOddRound && !isPlayer1);
+        return myTurn ? "نوبت تو" : "نوبت حریف";
+    }
+    
+    private void OnSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            _ = SearchUsers();
+        }
+    }
+
+    private async Task SearchUsers()
+    {
+        hasSearched = true;
+        if (string.IsNullOrWhiteSpace(searchQuery)) 
+        {
+            searchResults = new();
+            return;
+        }
+
+        try
+        {
+            var response = await Http.GetFromJsonAsync<List<UserProfileDto>>($"users/search?query={searchQuery}");
+            searchResults = response?.Where(u => u.Id != AppState.CurrentUserId).ToList() ?? new();
+        }
+        catch 
+        {
+            var random = new Random();
+            searchResults = mockNames
+                .Where(n => n.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+                .Select((name, i) => new UserProfileDto
+                {
+                    Id = Guid.NewGuid(),
+                    Username = name,
+                    AvatarUrl = mockAvatars[i % mockAvatars.Length],
+                    Level = random.Next(1, 20),
+                    Score = random.Next(100, 5000)
+                })
+                .ToList();
+                
+            if (!searchResults.Any())
+            {
+                searchResults = Enumerable.Range(0, 3)
+                    .Select(i => new UserProfileDto
+                    {
+                        Id = Guid.NewGuid(),
+                        Username = mockNames[random.Next(mockNames.Length)] + random.Next(10, 99),
+                        AvatarUrl = mockAvatars[random.Next(mockAvatars.Length)],
+                        Level = random.Next(1, 20),
+                        Score = random.Next(100, 5000)
+                    })
+                    .ToList();
+            }
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+    
+    private async void StartRandomGame()
+    {
+        opponentNotFound = false;
+        isSearchingOpponent = true;
+        searchTime = 59;
+        targetSearchTime = 59;
+        
+        try
+        {
+            // Join matchmaking queue
+            var response = await Http.PostAsync("games/matchmaking/join", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<MatchmakingResultDto>();
+                if (result?.IsMatched == true && result.GameId.HasValue)
+                {
+                    // Already matched!
+                    gameId = result.GameId.Value;
+                    isSearchingOpponent = false;
+                    await LoadActiveGames();
+                    StateHasChanged();
+                    return;
+                }
+            }
+        }
+        catch
+        {
+            // Continue with polling
+        }
+
+        searchTimer?.Dispose();
+        searchTimer = new Timer(2000); // Poll every 2 seconds
+        searchTimer.Elapsed += OnSearchTimerTick;
+        searchTimer.Start();
+        
+        StateHasChanged();
+    }
+    
+    private async void OnSearchTimerTick(object? sender, ElapsedEventArgs e)
+    {
+        searchTime -= 2;
+        
+        if (searchTime <= 0)
+        {
+            searchTime = 0;
+            searchTimer?.Stop();
+            
+            await InvokeAsync(() =>
+            {
+                opponentNotFound = true;
+                StateHasChanged();
+            });
+            return;
+        }
+
+        try
+        {
+            var response = await Http.GetFromJsonAsync<MatchmakingResultDto>("games/matchmaking/status");
+            
+            if (response?.IsMatched == true && response.GameId.HasValue)
+            {
+                searchTimer?.Stop();
+                await InvokeAsync(async () =>
+                {
+                    gameId = response.GameId.Value;
+                    isSearchingOpponent = false;
+                    await LoadActiveGames();
+                    StateHasChanged();
+                });
+                return;
+            }
+        }
+        catch
+        {
+            // Continue polling
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+    
+    private async void CancelSearch()
+    {
+        searchTimer?.Stop();
+        searchTimer?.Dispose();
+
+        try
+        {
+            await Http.PostAsync("games/matchmaking/leave", null);
+        }
+        catch
+        {
+            // Ignore
+        }
+
+        isSearchingOpponent = false;
+        StateHasChanged();
+    }
+    
+    private string FormatTime(int seconds)
+    {
+        var mins = seconds / 60;
+        var secs = seconds % 60;
+        return $"{mins:D2}:{secs:D2}";
+    }
+    
+    private GameDto CreateMockGame()
+    {
+        var random = new Random();
+        return new GameDto
+        {
+            Id = Guid.NewGuid(),
+            Player1Id = GetCurrentUserId(),
+            Player1Username = AppState.Username ?? "شما",
+            Player1AvatarUrl = AppState.AvatarUrl ?? "😎",
+            Player2Id = Guid.NewGuid(),
+            Player2Username = mockNames[random.Next(mockNames.Length)],
+            Player2AvatarUrl = mockAvatars[random.Next(mockAvatars.Length)],
+            CurrentRound = 1,
+            Player1Score = 0,
+            Player2Score = 0
+        };
+    }
+    
+    private string GetRandomColor(string name)
+    {
+        var colors = new[] { "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD", "#98D8C8", "#F7DC6F" };
+        return colors[Math.Abs(name.GetHashCode()) % colors.Length];
+    }
+
+    private async Task ChallengeUser(Guid opponentId)
+    {
+        var opponent = searchResults.FirstOrDefault(u => u.Id == opponentId);
+        if (opponent == null) return;
+
+        try
+        {
+            var createDto = new CreateGameDto(
+                ChallengerId: GetCurrentUserId(),
+                OpponentId: opponent.Id
+            );
+
+            var response = await Http.PostAsJsonAsync("games", createDto);
+            if (response.IsSuccessStatusCode)
+            {
+                var createdGame = await response.Content.ReadFromJsonAsync<GameDto>();
+                if (createdGame != null)
+                {
+                    gameId = createdGame.Id;
+                    await LoadActiveGames();
+                    StateHasChanged();
+                    return;
+                }
+            }
+        }
+        catch
+        {
+            // Ignore and fall back to local game if server call fails.
+        }
+
+        var fallbackGame = new GameDto
+        {
+            Id = Guid.NewGuid(),
+            Player1Id = GetCurrentUserId(),
+            Player1Username = AppState.Username ?? "شما",
+            Player1AvatarUrl = AppState.AvatarUrl ?? "😎",
+            Player2Id = opponent.Id,
+            Player2Username = opponent.Username,
+            Player2AvatarUrl = opponent.AvatarUrl,
+            CurrentRound = 1,
+            Player1Score = 0,
+            Player2Score = 0
+        };
+
+        gameId = fallbackGame.Id;
+        StateHasChanged();
+    }
+    
+    public void Dispose()
+    {
+        searchTimer?.Stop();
+        searchTimer?.Dispose();
+    }
+
+    public class GameDto
+    {
+        public Guid Id { get; set; }
+        public Guid Player1Id { get; set; }
+        public string Player1Username { get; set; } = "";
+        public string Player1AvatarUrl { get; set; } = "";
+        public Guid Player2Id { get; set; }
+        public string Player2Username { get; set; } = "";
+        public string Player2AvatarUrl { get; set; } = "";
+        public int Player1Score { get; set; }
+        public int Player2Score { get; set; }
+        public int CurrentRound { get; set; }
+        public int Status { get; set; }
+        public Guid? WinnerId { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime LastActivityAt { get; set; }
+    }
+
+    public class UserProfileDto
+    {
+        public Guid Id { get; set; }
+        public string Username { get; set; } = "";
+        public string AvatarUrl { get; set; } = "";
+        public int Score { get; set; }
+        public int Level { get; set; }
+        public int TotalWins { get; set; }
+        public int TotalLosses { get; set; }
+        public int WinRate { get; set; }
+    }
+
+    public record MatchmakingResultDto(
+        bool IsMatched,
+        Guid? GameId,
+        string? OpponentUsername,
+        string? OpponentAvatarUrl,
+        bool InQueue
+    );
+
+    public record CreateGameDto(
+        Guid ChallengerId,
+        Guid OpponentId
+    );
+}

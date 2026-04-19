@@ -1,0 +1,410 @@
+﻿@page "/"
+@using System.Net.Http.Json
+@inject AppState AppState
+@inject NavigationManager Navigation
+@inject HttpClient Http
+
+<div class="welcome-container">
+    @if (!AppState.IsLoggedIn)
+    {
+        <div class="logo-container">
+            <div class="logo">
+                <span class="logo-icon">🎯</span>
+                <span class="logo-text">کوییز باتل</span>
+            </div>
+            <p>دانش خود را به چالش بکشید!</p>
+        </div>
+
+        <div class="buttons-container">
+            <button class="btn btn-primary" @onclick="StartGame">
+                شروع بازی
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="main-menu">
+            <div class="user-info">
+                <div class="avatar-emoji-display" style="@GetAvatarStyle()">
+                    <span>@GetAvatarEmoji()</span>
+                </div>
+                <span class="username">@AppState.Username</span>
+                <div class="coins">
+                    <span class="coin-amount">@AppState.Coins</span>
+                    <span class="coin-emoji">💰</span>
+                </div>
+            </div>
+
+            <div class="menu-buttons">
+                <button class="menu-btn" @onclick='@(() => Navigate("battle"))'>
+                    <span class="icon">⚔️</span>
+                    <span class="label">جنگ تن به تن</span>
+                </button>
+
+                <button class="menu-btn @(!AppState.HasPlayedDailyChallengeToday ? "menu-btn-shine" : "")" @onclick='@(() => Navigate("daily-challenge"))'>
+                    <span class="icon">📅</span>
+                    <span class="label">چالش روزانه</span>
+                </button>
+
+                <button class="menu-btn menu-btn-special" @onclick='@(() => Navigate("weekly-tournament"))'>
+                    <span class="icon">🏆</span>
+                    <span class="label">مسابقات هفتگی</span>
+                </button>
+
+                <button class="menu-btn" @onclick='@(() => Navigate("group-battle"))'>
+                    <span class="icon">👥</span>
+                    <span class="label">مبارزه گروهی</span>
+                </button>
+
+                <button class="menu-btn" @onclick='@(() => Navigate("groups"))'>
+                    <span class="icon">🏠</span>
+                    <span class="label">گروه‌های من</span>
+                </button>
+
+                <button class="menu-btn" @onclick='@(() => Navigate("store"))'>
+                    <span class="icon">🛒</span>
+                    <span class="label">فروشگاه</span>
+                </button>
+
+                <button class="menu-btn" @onclick='@(() => Navigate("profile"))'>
+                    <span class="icon">👤</span>
+                    <span class="label">پروفایل</span>
+                </button>
+            </div>
+
+            @if (!AppState.HasCompletedTutorial)
+            {
+                <button class="btn-start-tour" @onclick="StartTour">
+                    <span>🎓</span> راهنمای بازی
+                </button>
+            }
+        </div>
+        
+        @* Daily Login Reward Popup *@
+        @if (showDailyReward)
+        {
+            <div class="daily-reward-overlay" @onclick="CloseDailyReward">
+                <div class="daily-reward-popup" @onclick:stopPropagation="true">
+                    <button class="daily-reward-close" @onclick="CloseDailyReward">✕</button>
+                    <div class="daily-reward-title">جایزه روزانه</div>
+                    <p class="daily-reward-subtitle">هر روز بیا و زنجیره طلا را حفظ کن تا جایزه‌ها بیشتر شود.</p>
+
+                    <div class="reward-streak-header">
+                        <span class="reward-fire-icon">🔥</span>
+                        <span class="reward-streak-label">روز @rewardStreak</span>
+                    </div>
+
+                    <div class="reward-days-row">
+                        @for (int d = 1; d <= 20; d++)
+                        {
+                            var day = d;
+                            var isPast = day < nextRewardDay;
+                            var isCurrent = day == nextRewardDay;
+                            var isLocked = day > nextRewardDay;
+                            var info = dailyRewards.FirstOrDefault(r => r.Day == day) ?? GetFallbackRewardInfo(day);
+                            var displayIcon = isLocked ? "🔒" : info.SpecialReward ?? info.Day switch
+                            {
+                                7 => "🏆",
+                                13 => "💎",
+                                20 => "🏅",
+                                _ => info.SpecialReward ?? "📦"
+                            };
+
+                            <div class="reward-day-cell @(isPast ? "reward-day-past" : "") @(isCurrent ? "reward-day-current" : "") @(isLocked ? "reward-day-locked" : "")">
+                                <span class="reward-day-icon">@displayIcon</span>
+                                <span class="reward-day-coins">+@info.CoinReward</span>
+                                <span class="reward-day-num">روز @day</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="reward-earned">
+                        <span class="reward-coin-icon">💰</span>
+                        <span class="reward-earned-amount">+@rewardCoins سکه</span>
+                    </div>
+
+                    <div class="daily-reward-fire-animation @(showClaimAnimation ? "active" : "")">
+                        <span class="flame flame-1"></span>
+                        <span class="flame flame-2"></span>
+                        <span class="flame flame-3"></span>
+                    </div>
+
+                    <button class="btn btn-primary reward-claim-btn" @onclick="ClaimReward" disabled="@showClaimAnimation">
+                        @(showClaimAnimation ? "در حال ثبت جایزه..." : "دریافت جایزه 🎉")
+                    </button>
+                    <p class="reward-hint">فردا هم بیا تا زنجیره همچنان فعال بماند.</p>
+                </div>
+            </div>
+        }
+
+        @* Tour Modal *@
+        @if (showTour)
+        {
+            <div class="tour-modal-overlay" @onclick="CloseTour">
+                <div class="tour-modal" @onclick:stopPropagation="true">
+                    <button class="tour-close" @onclick="CloseTour">✕</button>
+                    <div class="tour-step-icon">@tourSteps[currentTourStep].Icon</div>
+                    <h3>@tourSteps[currentTourStep].Title</h3>
+                    <p>@tourSteps[currentTourStep].Description</p>
+                    <div class="tour-dots">
+                        @for (int i = 0; i < tourSteps.Count; i++)
+                        {
+                            var idx = i;
+                            <span class="tour-dot @(i == currentTourStep ? "active" : "")" @onclick="@(() => GoToStep(idx))"></span>
+                        }
+                    </div>
+                    <div class="tour-nav">
+                        @if (currentTourStep > 0)
+                        {
+                            <button class="btn-tour" @onclick="PrevTourStep">قبلی</button>
+                        }
+                        else
+                        {
+                            <span></span>
+                        }
+                        @if (currentTourStep < tourSteps.Count - 1)
+                        {
+                            <button class="btn-tour btn-tour-primary" @onclick="NextTourStep">بعدی</button>
+                        }
+                        else
+                        {
+                            <button class="btn-tour btn-tour-primary" @onclick="FinishTour">شروع بازی!</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+    }
+</div>
+
+@code {
+    private bool showTour = false;
+    private int currentTourStep = 0;
+    private bool showDailyReward = false;
+    private bool showClaimAnimation = false;
+    private int rewardCoins = 0;
+    private int rewardStreak = 1;
+    private int nextRewardDay = 1;
+    private List<DailyRewardInfo> dailyRewards = new();
+
+    private List<TourStep> tourSteps = new()
+    {
+        new TourStep { Icon = "👤", Title = "پروفایل شما", Description = "اینجا آواتار، نام و سکه‌های شما نمایش داده می‌شود." },
+        new TourStep { Icon = "💰", Title = "سکه‌ها", Description = "با برنده شدن در بازی‌ها سکه کسب کنید و آیتم‌های جدید بخرید!" },
+        new TourStep { Icon = "⚔️", Title = "جنگ تن به تن", Description = "با بازیکنان دیگر رقابت کنید! هر بازی ۶ راند با ۳ سوال." },
+        new TourStep { Icon = "📅", Title = "چالش روزانه", Description = "هر روز یک چالش جدید با جایزه‌های ویژه!" },
+        new TourStep { Icon = "👥", Title = "مبارزه گروهی", Description = "با دوستان تیم بسازید و با گروه‌های دیگر رقابت کنید!" },
+        new TourStep { Icon = "🏠", Title = "گروه‌های من", Description = "گروه‌های خود را مدیریت کنید یا به گروه‌های جدید بپیوندید." },
+        new TourStep { Icon = "🛒", Title = "فروشگاه", Description = "آواتارها، پاورآپ‌ها و موارد بیشتر را بخرید!" },
+        new TourStep { Icon = "👤", Title = "پروفایل", Description = "آمار بازی‌ها، دستاوردها و تنظیمات حساب شما." }
+    };
+
+    private class TourStep
+    {
+        public string Icon { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+    }
+
+    private record DailyRewardStatus(int CurrentStreak, List<DailyRewardStatusItem> Rewards, int NextRewardDay);
+    private record DailyRewardStatusItem(int Day, int CoinReward, string? SpecialReward, bool CanClaim, bool IsClaimed);
+    private record DailyRewardInfo(int Day, int CoinReward, string? SpecialReward, bool CanClaim, bool IsClaimed);
+    private record ClaimResult(bool IsSuccessful, int CoinsReceived, string? SpecialReward, int NewStreak);
+
+    protected override async Task OnInitializedAsync()
+    {
+        AppState.OnChange += StateHasChanged;
+
+        if (AppState.IsLoggedIn && !AppState.HasCompletedTutorial)
+        {
+            showTour = true;
+        }
+
+        await LoadDailyRewardStatus();
+
+        if (AppState.IsLoggedIn)
+        {
+            var reward = AppState.TryClaimDailyLoginReward();
+            if (reward.HasValue)
+            {
+                rewardCoins = reward.Value.coins;
+                rewardStreak = reward.Value.streak;
+                nextRewardDay = rewardStreak;
+                showDailyReward = true;
+                await LoadDailyRewardStatus();
+            }
+        }
+    }
+
+    private async Task LoadDailyRewardStatus()
+    {
+        if (!AppState.IsLoggedIn)
+        {
+            nextRewardDay = rewardStreak;
+            dailyRewards = Enumerable.Range(1, 20)
+                .Select(day => GetFallbackRewardInfo(day))
+                .ToList();
+            return;
+        }
+
+        try
+        {
+            var status = await Http.GetFromJsonAsync<DailyRewardStatus>($"dailyrewards/status/{AppState.CurrentUserId}");
+            if (status != null)
+            {
+                rewardStreak = status.CurrentStreak;
+                nextRewardDay = status.NextRewardDay;
+                dailyRewards = status.Rewards
+                    .Select(r => new DailyRewardInfo(r.Day, r.CoinReward, r.SpecialReward, r.CanClaim, r.IsClaimed))
+                    .ToList();
+                return;
+            }
+        }
+        catch
+        {
+            // ignore and fallback
+        }
+
+        dailyRewards = Enumerable.Range(1, 20)
+            .Select(day => GetFallbackRewardInfo(day))
+            .ToList();
+        nextRewardDay = rewardStreak;
+    }
+
+    private async Task ClaimReward()
+    {
+        if (!showDailyReward || !AppState.IsLoggedIn)
+            return;
+
+        showClaimAnimation = true;
+        StateHasChanged();
+        await Task.Delay(900);
+
+        try
+        {
+            var response = await Http.PostAsync($"dailyrewards/claim/{AppState.CurrentUserId}", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ClaimResult>();
+                if (result != null && result.IsSuccessful)
+                {
+                    rewardCoins = result.CoinsReceived;
+                    rewardStreak = result.NewStreak;
+                    nextRewardDay = ((rewardStreak % dailyRewards.Count) + 1);
+                    await LoadDailyRewardStatus();
+                }
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        showDailyReward = false;
+        showClaimAnimation = false;
+        StateHasChanged();
+    }
+
+    private void CloseDailyReward()
+    {
+        showDailyReward = false;
+    }
+
+    private DailyRewardInfo GetFallbackRewardInfo(int day)
+    {
+        var (icon, coins) = day switch
+        {
+            1 => ("📦", 10),
+            2 => ("📦", 15),
+            3 => ("📦", 20),
+            4 => ("⭐", 25),
+            5 => ("⭐", 30),
+            6 => ("⭐", 35),
+            7 => ("💎", 40),
+            8 => ("💎", 45),
+            9 => ("💎", 50),
+            10 => ("🏆", 55),
+            11 => ("📦", 60),
+            12 => ("📦", 65),
+            13 => ("⭐", 70),
+            14 => ("⭐", 75),
+            15 => ("💎", 80),
+            16 => ("💎", 85),
+            17 => ("🏆", 90),
+            18 => ("🏆", 100),
+            19 => ("🌟", 120),
+            20 => ("🏅", 150),
+            _ => ("📦", 10)
+        };
+
+        return new DailyRewardInfo(day, coins, null, false, false);
+    }
+
+    private string GetAvatarEmoji()
+    {
+        if (string.IsNullOrEmpty(AppState.AvatarUrl))
+            return "👤";
+        return AppState.AvatarUrl;
+    }
+
+    private string GetAvatarStyle()
+    {
+        var colors = new[] { "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD", "#98D8C8", "#F7DC6F" };
+        var hash = Math.Abs((AppState.Username ?? "").GetHashCode());
+        var color = colors[hash % colors.Length];
+        return $"background: {color};";
+    }
+
+    private void StartTour()
+    {
+        currentTourStep = 0;
+        showTour = true;
+    }
+
+    private void NextTourStep()
+    {
+        if (currentTourStep < tourSteps.Count - 1)
+            currentTourStep++;
+    }
+
+    private void PrevTourStep()
+    {
+        if (currentTourStep > 0)
+            currentTourStep--;
+    }
+    
+    private void GoToStep(int step)
+    {
+        currentTourStep = step;
+    }
+
+    private void FinishTour()
+    {
+        showTour = false;
+        AppState.HasCompletedTutorial = true;
+        AppState.NotifyStateChanged();
+    }
+
+    private void CloseTour()
+    {
+        showTour = false;
+        AppState.HasCompletedTutorial = true;
+        AppState.NotifyStateChanged();
+    }
+
+    private void StartGame()
+    {
+        Navigation.NavigateTo("/onboarding");
+    }
+
+    private void Navigate(string page)
+    {
+        Navigation.NavigateTo($"/{page}");
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= StateHasChanged;
+    }
+}

@@ -1,0 +1,362 @@
+@page "/profile"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject AppState AppState
+
+<div class="profile-container">
+    <div class="profile-header">
+        <button class="back-btn" @onclick="GoBack">←</button>
+        <h2>پروفایل</h2>
+        <button class="settings-btn" @onclick="OpenSettings">⚙️</button>
+    </div>
+
+    <!-- User Card -->
+    <div class="user-card">
+        <div class="avatar-section" @onclick="OpenAvatarSelector">
+            @if (IsAvatarImage)
+            {
+                <img src="@AppState.UserAvatar" alt="آواتار" class="profile-avatar" />
+            }
+            else
+            {
+                <div class="profile-avatar emoji-avatar">@GetAvatarEmoji()</div>
+            }
+            <div class="edit-badge">✏️</div>
+        </div>
+        <h3>@(string.IsNullOrEmpty(AppState.Username) ? "بازیکن" : AppState.Username)</h3>
+
+        <!-- Level badge + progress -->
+        <div class="level-badge">سطح @AppState.Level</div>
+        <div class="level-progress-wrap">
+            <div class="level-progress-bar">
+                <div class="level-progress-fill"
+                     style="width: @(AppState.WinsNeededForNextLevel > 0
+                         ? (int)((double)AppState.WinsTowardsNextLevel / AppState.WinsNeededForNextLevel * 100)
+                         : 0)%">
+                </div>
+            </div>
+            <span class="level-progress-label">
+                @AppState.WinsTowardsNextLevel / @AppState.WinsNeededForNextLevel برد تا سطح @(AppState.Level + 1)
+            </span>
+        </div>
+
+        <div class="user-stats">
+            <div class="stat">
+                <span class="value">@totalGames</span>
+                <span class="label">بازی</span>
+            </div>
+            <div class="stat">
+                <span class="value">@AppState.TotalWins</span>
+                <span class="label">برد</span>
+            </div>
+            <div class="stat">
+                <span class="value">@winRate%</span>
+                <span class="label">نرخ برد</span>
+            </div>
+            <div class="stat">
+                <span class="value">🪙 @AppState.UserCoins.ToString("N0")</span>
+                <span class="label">سکه</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="section">
+        <h4>آمار بازی</h4>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="icon">🎯</span>
+                <span class="value">@correctAnswers</span>
+                <span class="label">جواب صحیح</span>
+            </div>
+            <div class="stat-card">
+                <span class="icon">⚡</span>
+                <span class="value">@avgAnswerTime ثانیه</span>
+                <span class="label">میانگین زمان پاسخ</span>
+            </div>
+            <div class="stat-card">
+                <span class="icon">🔥</span>
+                <span class="value">@longestStreak</span>
+                <span class="label">بیشترین برد متوالی</span>
+            </div>
+            <div class="stat-card">
+                <span class="icon">📚</span>
+                <span class="value">@favoriteCategory</span>
+                <span class="label">دسته مورد علاقه</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements -->
+    <div class="section">
+        <h4>دستاوردها</h4>
+        <div class="achievements-grid">
+            @foreach (var achievement in achievements)
+            {
+                <div class="achievement @(achievement.IsUnlocked ? "" : "locked")">
+                    <span class="icon">@achievement.Icon</span>
+                    <span class="name">@achievement.Name</span>
+                    @if (!achievement.IsUnlocked)
+                    {
+                        <div class="progress-bar">
+                            <div class="progress" style="width: @achievement.Progress%"></div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Recent Games -->
+    <div class="section">
+        <h4>بازی‌های اخیر</h4>
+        <div class="recent-games">
+            @foreach (var game in recentGames)
+            {
+                <div class="game-item @(game.IsWin ? "win" : "loss")">
+                    <div class="opponent">
+                        <img src="@game.OpponentAvatar" alt="" class="avatar" />
+                        <span>@game.OpponentName</span>
+                    </div>
+                    <div class="score">@game.MyScore - @game.OpponentScore</div>
+                    <div class="result">@(game.IsWin ? "برد" : "باخت")</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Edit Profile Button -->
+    <button class="btn btn-primary edit-profile-btn" @onclick="OpenEditProfile">
+        ویرایش پروفایل
+    </button>
+</div>
+
+<!-- Avatar Selector Modal -->
+@if (showAvatarSelector)
+{
+    <div class="modal-overlay" @onclick="CloseAvatarSelector">
+        <div class="modal" @onclick:stopPropagation>
+            <h3>انتخاب آواتار</h3>
+            <div class="avatar-grid">
+                @for (int i = 1; i <= 20; i++)
+                {
+                    var index = i;
+                    var avatarUrl = $"https://api.dicebear.com/7.x/avataaars/svg?seed=avatar{index}";
+                    <div class="avatar-item @(selectedAvatar == avatarUrl ? "selected" : "")" 
+                         @onclick="() => SelectAvatar(avatarUrl)">
+                        <img src="@avatarUrl" alt="آواتار @index" />
+                    </div>
+                }
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" @onclick="CloseAvatarSelector">انصراف</button>
+                <button class="btn btn-primary" @onclick="SaveAvatar">ذخیره</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Edit Profile Modal -->
+@if (showEditProfile)
+{
+    <div class="modal-overlay" @onclick="CloseEditProfile">
+        <div class="modal" @onclick:stopPropagation>
+            <h3>ویرایش پروفایل</h3>
+            <div class="edit-form">
+                <label>نام کاربری</label>
+                <input type="text" @bind="editUsername" placeholder="نام کاربری" />
+                
+                <label>ایمیل</label>
+                <input type="email" @bind="editEmail" placeholder="ایمیل (اختیاری)" />
+                
+                <label>شماره تلفن</label>
+                <input type="tel" @bind="editPhone" placeholder="شماره تلفن (اختیاری)" />
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" @onclick="CloseEditProfile">انصراف</button>
+                <button class="btn btn-primary" @onclick="SaveProfile">ذخیره</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Settings Modal -->
+@if (showSettings)
+{
+    <div class="modal-overlay" @onclick="CloseSettings">
+        <div class="modal" @onclick:stopPropagation>
+            <h3>تنظیمات</h3>
+            <div class="settings-list">
+                <div class="setting-item">
+                    <span>صدا</span>
+                    <label class="toggle">
+                        <input type="checkbox" @bind="soundEnabled" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>موسیقی</span>
+                    <label class="toggle">
+                        <input type="checkbox" @bind="musicEnabled" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>نوتیفیکیشن</span>
+                    <label class="toggle">
+                        <input type="checkbox" @bind="notificationsEnabled" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <span>لرزش</span>
+                    <label class="toggle">
+                        <input type="checkbox" @bind="vibrationEnabled" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <hr />
+            <button class="btn btn-danger logout-btn" @onclick="Logout">
+                خروج از حساب کاربری
+            </button>
+            <div class="modal-actions">
+                <button class="btn btn-primary" @onclick="CloseSettings">بستن</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // User Stats
+    private int totalGames = 127;
+    private int wins = 89;
+    private int winRate = 70;
+    private int correctAnswers = 1523;
+    private double avgAnswerTime = 6.3;
+    private int longestStreak = 12;
+    private string favoriteCategory = "تاریخ";
+
+    // Modals
+    private bool showAvatarSelector = false;
+    private bool showEditProfile = false;
+    private bool showSettings = false;
+
+    // Avatar Selection
+    private string selectedAvatar = "";
+
+    // Edit Profile
+    private string editUsername = "";
+    private string editEmail = "";
+    private string editPhone = "";
+
+    // Settings
+    private bool soundEnabled = true;
+    private bool musicEnabled = true;
+    private bool notificationsEnabled = true;
+    private bool vibrationEnabled = true;
+
+    private List<Achievement> achievements = new()
+    {
+        new Achievement { Name = "اولین برد", Icon = "🏆", IsUnlocked = true, Progress = 100 },
+        new Achievement { Name = "۱۰ برد متوالی", Icon = "🔥", IsUnlocked = true, Progress = 100 },
+        new Achievement { Name = "استاد تاریخ", Icon = "📚", IsUnlocked = false, Progress = 75 },
+        new Achievement { Name = "سریع‌ترین انگشت", Icon = "⚡", IsUnlocked = false, Progress = 45 },
+        new Achievement { Name = "۱۰۰ بازی", Icon = "🎮", IsUnlocked = true, Progress = 100 },
+        new Achievement { Name = "جمع‌آوری ۱۰۰۰۰ سکه", Icon = "💰", IsUnlocked = false, Progress = 30 }
+    };
+
+    private List<GameHistory> recentGames = new()
+    {
+        new GameHistory { OpponentName = "علی", OpponentAvatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=ali", MyScore = 15, OpponentScore = 12, IsWin = true },
+        new GameHistory { OpponentName = "سارا", OpponentAvatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=sara", MyScore = 10, OpponentScore = 14, IsWin = false },
+        new GameHistory { OpponentName = "محمد", OpponentAvatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=mohammad", MyScore = 16, OpponentScore = 11, IsWin = true },
+        new GameHistory { OpponentName = "زهرا", OpponentAvatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=zahra", MyScore = 18, OpponentScore = 9, IsWin = true },
+        new GameHistory { OpponentName = "امیر", OpponentAvatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=amir", MyScore = 8, OpponentScore = 15, IsWin = false }
+    };
+
+    protected override void OnInitialized()
+    {
+        editUsername = AppState.Username;
+        selectedAvatar = AppState.UserAvatar;
+    }
+
+    private void GoBack() => NavigationManager.NavigateTo("/");
+
+    private bool IsAvatarImage => !string.IsNullOrWhiteSpace(AppState.UserAvatar) &&
+        Uri.IsWellFormedUriString(AppState.UserAvatar, UriKind.Absolute);
+
+    private string GetAvatarEmoji()
+    {
+        if (string.IsNullOrWhiteSpace(AppState.UserAvatar))
+            return "👤";
+
+        return Uri.IsWellFormedUriString(AppState.UserAvatar, UriKind.Absolute)
+            ? "👤"
+            : AppState.UserAvatar;
+    }
+
+    // Avatar Methods
+    private void OpenAvatarSelector()
+    {
+        selectedAvatar = AppState.UserAvatar;
+        showAvatarSelector = true;
+    }
+
+    private void CloseAvatarSelector() => showAvatarSelector = false;
+
+    private void SelectAvatar(string avatarUrl)
+    {
+        selectedAvatar = avatarUrl;
+    }
+
+    private async Task SaveAvatar()
+    {
+        AppState.UserAvatar = selectedAvatar;
+        CloseAvatarSelector();
+        // TODO: Save to API
+    }
+
+    // Edit Profile Methods
+    private void OpenEditProfile()
+    {
+        editUsername = AppState.Username;
+        showEditProfile = true;
+    }
+
+    private void CloseEditProfile() => showEditProfile = false;
+
+    private async Task SaveProfile()
+    {
+        AppState.Username = editUsername;
+        CloseEditProfile();
+        // TODO: Save to API
+    }
+
+    // Settings Methods
+    private void OpenSettings() => showSettings = true;
+    private void CloseSettings() => showSettings = false;
+
+    private void Logout()
+    {
+        // TODO: Clear user data and navigate to onboarding
+        NavigationManager.NavigateTo("/onboarding");
+    }
+
+    private class Achievement
+    {
+        public string Name { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public bool IsUnlocked { get; set; }
+        public int Progress { get; set; }
+    }
+
+    private class GameHistory
+    {
+        public string OpponentName { get; set; } = "";
+        public string OpponentAvatar { get; set; } = "";
+        public int MyScore { get; set; }
+        public int OpponentScore { get; set; }
+        public bool IsWin { get; set; }
+    }
+}

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>کوییز بتل - Quiz Battle</title>
+    <base href="/" />
+    <link rel="preload" id="webassembly" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/quiz-battle.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="QuizBattle.PWA.styles.css" rel="stylesheet" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #0b1224;
+            color: #fff;
+            font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        #app {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0b1224 0%, #0f1a37 70%, #101c3a 100%);
+        }
+
+        .loading-overlay {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .loading-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 32px 36px;
+            max-width: 360px;
+            width: 100%;
+            border-radius: 28px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+
+        .loading-card h3,
+        .loading-card p {
+            margin: 0;
+            text-align: center;
+        }
+
+        .loading-card h3 {
+            color: #ffffff;
+            font-size: 1.35rem;
+        }
+
+        .loading-card p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.98rem;
+            line-height: 1.6;
+        }
+
+        .spinner {
+            width: 52px;
+            height: 52px;
+            border: 5px solid rgba(255, 255, 255, 0.12);
+            border-top-color: #6C63FF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="loading-overlay">
+            <div class="loading-card">
+                <div class="spinner"></div>
+                <h3>آماده‌سازی کوییز بتل...</h3>
+                <p>به زودی وارد بازی می‌شوید. لطفاً کمی صبر کنید.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/_framework/blazor.webassembly.js" type="text/javascript"></script>
+    <script>
+        if ('serviceWorker' in navigator && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                registrations.forEach(function (registration) {
+                    var scriptUrl = registration.active?.scriptURL || registration.scriptURL;
+                    if (scriptUrl && scriptUrl.includes('service-worker.published.js')) {
+                        registration.unregister();
+                    }
+                });
+            }).finally(function () {
+                navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });
+            });
+        }
+
+        // LocalStorage helper functions for Blazor
+        window.browserStorage = {
+            get: function (key) {
+                return localStorage.getItem(key);
+            },
+            set: function (key, value) {
+                localStorage.setItem(key, value);
+            },
+            remove: function (key) {
+                localStorage.removeItem(key);
+            },
+            clear: function () {
+                localStorage.clear();
+            }
+        };
+    </script>
+</body>
+
+</html>

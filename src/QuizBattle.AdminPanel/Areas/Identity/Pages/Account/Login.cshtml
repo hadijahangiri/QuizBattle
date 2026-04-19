@@ -1,0 +1,63 @@
+@page
+@model QuizBattle.AdminPanel.Areas.Identity.Pages.Account.LoginModel
+
+@{
+    ViewData["Title"] = "ورود به پنل مدیریت";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-circle ms-2"></i>@Model.ErrorMessage
+    </div>
+}
+
+<form method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    
+    <div class="form-floating">
+        <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="ایمیل" />
+        <label asp-for="Input.Email">ایمیل</label>
+        <span asp-validation-for="Input.Email" class="text-danger"></span>
+    </div>
+    
+    <div class="form-floating">
+        <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="رمز عبور" />
+        <label asp-for="Input.Password">رمز عبور</label>
+        <span asp-validation-for="Input.Password" class="text-danger"></span>
+    </div>
+    
+    <div class="captcha-container">
+        <div class="captcha-image" id="captchaText">@Model.CaptchaText</div>
+        <button type="button" class="captcha-refresh" onclick="refreshCaptcha()" title="کپچای جدید">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <div class="captcha-input">
+            <input asp-for="Input.CaptchaInput" placeholder="کد امنیتی" autocomplete="off" />
+        </div>
+    </div>
+    <span asp-validation-for="Input.CaptchaInput" class="text-danger d-block mb-3" style="margin-top: -10px;"></span>
+    
+    <div class="form-check mb-3">
+        <input class="form-check-input" asp-for="Input.RememberMe" />
+        <label class="form-check-label" asp-for="Input.RememberMe">مرا به خاطر بسپار</label>
+    </div>
+    
+    <button type="submit" class="btn btn-login">
+        <i class="bi bi-box-arrow-in-left ms-2"></i>ورود
+    </button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function refreshCaptcha() {
+            fetch('/Identity/Account/Login?handler=RefreshCaptcha')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('captchaText').textContent = data.captcha;
+                });
+        }
+    </script>
+}

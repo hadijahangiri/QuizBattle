@@ -24,13 +24,13 @@ public class StoreItem : BaseEntity
 /// </summary>
 public class Transaction : BaseEntity
 {
-    public Guid UserId { get; set; }
+    public int UserId { get; set; }
     public TransactionType Type { get; set; }
     public int CoinAmount { get; set; }
     public decimal? PriceInToman { get; set; } // فقط برای خرید
     public string? Description { get; set; }
-    public Guid? StoreItemId { get; set; } // فقط برای خرید
-    public Guid? RelatedUserId { get; set; } // برای هدیه دادن سکه
+    public int? StoreItemId { get; set; } // فقط برای خرید
+    public int? RelatedUserId { get; set; } // برای هدیه دادن سکه
     public string? PaymentReferenceId { get; set; } // شماره پیگیری پرداخت
     public bool IsSuccessful { get; set; } = false;
     
@@ -45,8 +45,8 @@ public class Transaction : BaseEntity
 /// </summary>
 public class CoinGiftRequest : BaseEntity
 {
-    public Guid SenderId { get; set; }
-    public Guid ReceiverId { get; set; }
+    public int SenderId { get; set; }
+    public int ReceiverId { get; set; }
     public int CoinAmount { get; set; }
     public string? Message { get; set; }
     public bool IsAccepted { get; set; } = false;

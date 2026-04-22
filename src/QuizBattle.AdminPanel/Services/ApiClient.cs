@@ -7,29 +7,29 @@ public interface IApiClient
 {
     // Users
     Task<List<UserDto>> GetAllUsersAsync();
-    Task<UserDto?> GetUserByIdAsync(Guid id);
+    Task<UserDto?> GetUserByIdAsync(int id);
     
     // Categories
     Task<List<CategoryDto>> GetAllCategoriesAsync();
-    Task<CategoryDto?> GetCategoryByIdAsync(Guid id);
+    Task<CategoryDto?> GetCategoryByIdAsync(int id);
     Task<CategoryDto?> CreateCategoryAsync(CreateCategoryDto dto);
-    Task<CategoryDto?> UpdateCategoryAsync(Guid id, CreateCategoryDto dto);
-    Task<bool> DeleteCategoryAsync(Guid id);
+    Task<CategoryDto?> UpdateCategoryAsync(int id, CreateCategoryDto dto);
+    Task<bool> DeleteCategoryAsync(int id);
     
     // Questions
     Task<List<QuestionWithCorrectAnswerDto>> GetAllQuestionsAsync(int page = 1, int pageSize = 50);
-    Task<QuestionWithCorrectAnswerDto?> GetQuestionByIdAsync(Guid id);
+    Task<QuestionWithCorrectAnswerDto?> GetQuestionByIdAsync(int id);
     Task<QuestionWithCorrectAnswerDto?> CreateQuestionAsync(CreateQuestionDto dto);
-    Task<QuestionWithCorrectAnswerDto?> UpdateQuestionAsync(Guid id, CreateQuestionDto dto);
-    Task<bool> DeleteQuestionAsync(Guid id);
+    Task<QuestionWithCorrectAnswerDto?> UpdateQuestionAsync(int id, CreateQuestionDto dto);
+    Task<bool> DeleteQuestionAsync(int id);
     
     // Store
     Task<List<StoreItemDto>> GetAllStoreItemsAsync();
-    Task<StoreItemDto?> GetStoreItemByIdAsync(Guid id);
+    Task<StoreItemDto?> GetStoreItemByIdAsync(int id);
     Task<StoreItemDto?> CreateStoreItemAsync(CreateStoreItemDto dto);
-    Task<StoreItemDto?> UpdateStoreItemAsync(Guid id, CreateStoreItemDto dto);
-    Task<bool> DeleteStoreItemAsync(Guid id);
-    Task<bool> ToggleStoreItemActiveAsync(Guid id);
+    Task<StoreItemDto?> UpdateStoreItemAsync(int id, CreateStoreItemDto dto);
+    Task<bool> DeleteStoreItemAsync(int id);
+    Task<bool> ToggleStoreItemActiveAsync(int id);
 }
 
 public class ApiClient : IApiClient
@@ -56,7 +56,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<UserDto?> GetUserByIdAsync(Guid id)
+    public async Task<UserDto?> GetUserByIdAsync(int id)
     {
         try
         {
@@ -85,7 +85,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<CategoryDto?> GetCategoryByIdAsync(Guid id)
+    public async Task<CategoryDto?> GetCategoryByIdAsync(int id)
     {
         try
         {
@@ -114,7 +114,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<CategoryDto?> UpdateCategoryAsync(Guid id, CreateCategoryDto dto)
+    public async Task<CategoryDto?> UpdateCategoryAsync(int id, CreateCategoryDto dto)
     {
         try
         {
@@ -131,7 +131,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<bool> DeleteCategoryAsync(Guid id)
+    public async Task<bool> DeleteCategoryAsync(int id)
     {
         try
         {
@@ -161,7 +161,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<QuestionWithCorrectAnswerDto?> GetQuestionByIdAsync(Guid id)
+    public async Task<QuestionWithCorrectAnswerDto?> GetQuestionByIdAsync(int id)
     {
         try
         {
@@ -190,7 +190,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<QuestionWithCorrectAnswerDto?> UpdateQuestionAsync(Guid id, CreateQuestionDto dto)
+    public async Task<QuestionWithCorrectAnswerDto?> UpdateQuestionAsync(int id, CreateQuestionDto dto)
     {
         try
         {
@@ -207,7 +207,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<bool> DeleteQuestionAsync(Guid id)
+    public async Task<bool> DeleteQuestionAsync(int id)
     {
         try
         {
@@ -237,7 +237,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<StoreItemDto?> GetStoreItemByIdAsync(Guid id)
+    public async Task<StoreItemDto?> GetStoreItemByIdAsync(int id)
     {
         try
         {
@@ -266,7 +266,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<StoreItemDto?> UpdateStoreItemAsync(Guid id, CreateStoreItemDto dto)
+    public async Task<StoreItemDto?> UpdateStoreItemAsync(int id, CreateStoreItemDto dto)
     {
         try
         {
@@ -283,7 +283,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<bool> DeleteStoreItemAsync(Guid id)
+    public async Task<bool> DeleteStoreItemAsync(int id)
     {
         try
         {
@@ -296,7 +296,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    public async Task<bool> ToggleStoreItemActiveAsync(Guid id)
+    public async Task<bool> ToggleStoreItemActiveAsync(int id)
     {
         try
         {

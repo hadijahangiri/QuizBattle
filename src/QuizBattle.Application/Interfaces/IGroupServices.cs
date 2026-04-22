@@ -8,34 +8,34 @@ namespace QuizBattle.Application.Interfaces;
 /// </summary>
 public interface IGroupService
 {
-    Task<GroupDto> CreateAsync(Guid ownerId, CreateGroupDto dto);
-    Task<GroupDto?> GetByIdAsync(Guid id);
+    Task<GroupDto> CreateAsync(int ownerId, CreateGroupDto dto);
+    Task<GroupDto?> GetByIdAsync(int id);
     Task<GroupDto?> GetByUniqueCodeAsync(string uniqueCode);
-    Task<GroupDto> UpdateAsync(Guid id, Guid userId, UpdateGroupDto dto);
-    Task<bool> DeleteAsync(Guid id, Guid userId);
+    Task<GroupDto> UpdateAsync(int id, int userId, UpdateGroupDto dto);
+    Task<bool> DeleteAsync(int id, int userId);
     Task<PaginatedResultDto<GroupDto>> SearchAsync(GroupSearchDto dto);
-    Task<List<GroupDto>> GetUserGroupsAsync(Guid userId);
-    Task<List<GroupDto>> GetOwnedGroupsAsync(Guid userId);
+    Task<List<GroupDto>> GetUserGroupsAsync(int userId);
+    Task<List<GroupDto>> GetOwnedGroupsAsync(int userId);
     
     // اعضا
-    Task<List<GroupMemberDto>> GetMembersAsync(Guid groupId);
-    Task<bool> RequestMembershipAsync(Guid groupId, Guid userId, string? message = null);
-    Task<List<MembershipRequestDto>> GetMembershipRequestsAsync(Guid groupId, Guid userId);
-    Task<bool> ApproveMembershipAsync(Guid requestId, Guid approverId);
-    Task<bool> RejectMembershipAsync(Guid requestId, Guid approverId);
-    Task<bool> KickMemberAsync(Guid groupId, Guid memberId, Guid kickerId);
-    Task<bool> LeaveGroupAsync(Guid groupId, Guid userId);
-    Task<bool> PromoteMemberAsync(Guid groupId, Guid memberId, Guid promoterId, GroupRole newRole);
+    Task<List<GroupMemberDto>> GetMembersAsync(int groupId);
+    Task<bool> RequestMembershipAsync(int groupId, int userId, string? message = null);
+    Task<List<MembershipRequestDto>> GetMembershipRequestsAsync(int groupId, int userId);
+    Task<bool> ApproveMembershipAsync(int requestId, int approverId);
+    Task<bool> RejectMembershipAsync(int requestId, int approverId);
+    Task<bool> KickMemberAsync(int groupId, int memberId, int kickerId);
+    Task<bool> LeaveGroupAsync(int groupId, int userId);
+    Task<bool> PromoteMemberAsync(int groupId, int memberId, int promoterId, GroupRole newRole);
     
     // چت
-    Task<List<GroupChatMessageDto>> GetChatMessagesAsync(Guid groupId, int page = 1, int pageSize = 50);
-    Task<GroupChatMessageDto> SendMessageAsync(Guid userId, SendGroupChatDto dto);
-    Task<bool> DeleteMessageAsync(Guid messageId, Guid userId);
-    Task<bool> ToggleChatAsync(Guid groupId, Guid userId, bool enabled);
+    Task<List<GroupChatMessageDto>> GetChatMessagesAsync(int groupId, int page = 1, int pageSize = 50);
+    Task<GroupChatMessageDto> SendMessageAsync(int userId, SendGroupChatDto dto);
+    Task<bool> DeleteMessageAsync(int messageId, int userId);
+    Task<bool> ToggleChatAsync(int groupId, int userId, bool enabled);
     
     // آمار
-    Task<int> GetUserGroupsCountAsync(Guid userId);
-    Task<int> GetOwnedGroupsCountAsync(Guid userId);
+    Task<int> GetUserGroupsCountAsync(int userId);
+    Task<int> GetOwnedGroupsCountAsync(int userId);
 }
 
 /// <summary>
@@ -44,11 +44,11 @@ public interface IGroupService
 public interface IGroupBattleService
 {
     Task<GroupBattleDto> CreateBattleRequestAsync(CreateGroupBattleDto dto);
-    Task<GroupBattleDto?> GetByIdAsync(Guid id);
-    Task<List<GroupBattleDto>> GetGroupBattlesAsync(Guid groupId, int page = 1, int pageSize = 20);
+    Task<GroupBattleDto?> GetByIdAsync(int id);
+    Task<List<GroupBattleDto>> GetGroupBattlesAsync(int groupId, int page = 1, int pageSize = 20);
     Task<bool> MatchGroupsAsync(); // برای پیدا کردن گروه‌های هم‌تراز
-    Task<GroupBattleMatchDto?> GetCurrentMatchAsync(Guid battleId, Guid userId);
-    Task<AnswerResultDto> SubmitAnswerAsync(Guid userId, Guid matchId, SubmitAnswerDto dto);
+    Task<GroupBattleMatchDto?> GetCurrentMatchAsync(int battleId, int userId);
+    Task<AnswerResultDto> SubmitAnswerAsync(int userId, int matchId, SubmitAnswerDto dto);
     Task<bool> CheckAndExpireBattlesAsync(); // برای پایان بعد از 24 ساعت
-    Task<GroupBattleDto?> GetActiveBattleAsync(Guid groupId);
+    Task<GroupBattleDto?> GetActiveBattleAsync(int groupId);
 }

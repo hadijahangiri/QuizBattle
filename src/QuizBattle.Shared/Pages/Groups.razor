@@ -1,5 +1,5 @@
 @page "/groups"
-@page "/groups/{GroupId:guid}"
+@page "/groups/{GroupId:int}"
 @using QuizBattle.Application.DTOs
 @using QuizBattle.Domain.Enums
 @inject HttpClient Http
@@ -304,19 +304,19 @@
 </div>
 
 @code {
-    [Parameter] public Guid? GroupId { get; set; }
+    [Parameter] public int? GroupId { get; set; }
 
     private List<GroupDto> myGroups = new();
     private GroupDto? selectedGroup;
-    private Guid? selectedGroupId;
+    private int? selectedGroupId;
     private List<GroupMemberDto> members = new();
     private List<GroupChatMessageDto> chatMessages = new();
     private List<MembershipRequestDto> membershipRequests = new();
     private List<GroupDto> searchResults = new();
 
-    private HashSet<Guid> membershipRequestsSent = new();
-    private HashSet<Guid> myGroupIds = new();
-    private HashSet<Guid> selectedBattleParticipants = new();
+    private HashSet<int> membershipRequestsSent = new();
+    private HashSet<int> myGroupIds = new();
+    private HashSet<int> selectedBattleParticipants = new();
     private bool isSubmittingGroupBattleRequest = false;
     private string groupBattleMessage = string.Empty;
 
@@ -365,12 +365,12 @@
         await SearchGroups();
     }
 
-    private async Task SelectGroup(Guid id)
+    private async Task SelectGroup(int id)
     {
         await LoadGroupDetail(id);
     }
 
-    private async Task LoadGroupDetail(Guid id)
+    private async Task LoadGroupDetail(int id)
     {
         selectedGroupId = id;
         selectedGroup = await Http.GetFromJsonAsync<GroupDto>($"groups/{id}");
@@ -414,19 +414,19 @@
         }
     }
 
-    private async Task KickMember(Guid memberId)
+    private async Task KickMember(int memberId)
     {
         await Http.PostAsync($"groups/{selectedGroupId}/kick/{memberId}?kickerId={AppState.CurrentUserId}", null);
         await LoadMembers();
     }
 
-    private async Task ApproveRequest(Guid requestId)
+    private async Task ApproveRequest(int requestId)
     {
         await Http.PostAsync($"groups/membership-requests/{requestId}/approve?approverId={AppState.CurrentUserId}", null);
         await LoadRequests();
     }
 
-    private async Task RejectRequest(Guid requestId)
+    private async Task RejectRequest(int requestId)
     {
         await Http.PostAsync($"groups/membership-requests/{requestId}/reject?approverId={AppState.CurrentUserId}", null);
         await LoadRequests();
@@ -492,7 +492,7 @@
         searchResults = (await Http.GetFromJsonAsync<PaginatedResult<GroupDto>>(uri))?.Items ?? new();
     }
 
-    private async Task RequestMembership(Guid groupId)
+    private async Task RequestMembership(int groupId)
     {
         var response = await Http.PostAsJsonAsync($"groups/{groupId}/request-membership", new
         {
@@ -527,7 +527,7 @@
         return "درخواست عضویت";
     }
 
-    private void ToggleBattleParticipant(Guid userId)
+    private void ToggleBattleParticipant(int userId)
     {
         if (selectedBattleParticipants.Contains(userId))
             selectedBattleParticipants.Remove(userId);

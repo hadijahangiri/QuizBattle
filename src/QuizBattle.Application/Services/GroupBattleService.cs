@@ -26,7 +26,7 @@ public class GroupBattleService : IGroupBattleService
         if (group == null)
             throw new Exception("گروه یافت نشد");
 
-        if (dto.RequesterId == Guid.Empty)
+        if (dto.RequesterId == 0)
             throw new Exception("شناسه سازنده مبارزه مشخص نیست");
 
         var ownerMember = await _unitOfWork.Repository<GroupMember>()
@@ -108,7 +108,7 @@ public class GroupBattleService : IGroupBattleService
         return await GetByIdAsync(waitingBattle.Id) ?? throw new Exception("خطا در بارگذاری مبارزه");
     }
 
-    public async Task<GroupBattleDto?> GetByIdAsync(Guid id)
+    public async Task<GroupBattleDto?> GetByIdAsync(int id)
     {
         var battle = await _unitOfWork.Repository<GroupBattle>()
             .Query()
@@ -127,7 +127,7 @@ public class GroupBattleService : IGroupBattleService
         return battle == null ? null : MapToDto(battle);
     }
 
-    public async Task<List<GroupBattleDto>> GetGroupBattlesAsync(Guid groupId, int page = 1, int pageSize = 20)
+    public async Task<List<GroupBattleDto>> GetGroupBattlesAsync(int groupId, int page = 1, int pageSize = 20)
     {
         var query = _unitOfWork.Repository<GroupBattle>()
             .Query()
@@ -208,7 +208,7 @@ public class GroupBattleService : IGroupBattleService
         return matchedAny;
     }
 
-    public async Task<GroupBattleMatchDto?> GetCurrentMatchAsync(Guid battleId, Guid userId)
+    public async Task<GroupBattleMatchDto?> GetCurrentMatchAsync(int battleId, int userId)
     {
         var battle = await _unitOfWork.Repository<GroupBattle>()
             .Query()
@@ -242,7 +242,7 @@ public class GroupBattleService : IGroupBattleService
         );
     }
 
-    public async Task<GroupBattleDto?> GetActiveBattleAsync(Guid groupId)
+    public async Task<GroupBattleDto?> GetActiveBattleAsync(int groupId)
     {
         var battle = await _unitOfWork.Repository<GroupBattle>()
             .Query()
@@ -263,7 +263,7 @@ public class GroupBattleService : IGroupBattleService
         return battle == null ? null : MapToDto(battle);
     }
 
-    public async Task<AnswerResultDto> SubmitAnswerAsync(Guid userId, Guid matchId, SubmitAnswerDto dto)
+    public async Task<AnswerResultDto> SubmitAnswerAsync(int userId, int matchId, SubmitAnswerDto dto)
     {
         throw new NotImplementedException();
     }
@@ -296,7 +296,7 @@ public class GroupBattleService : IGroupBattleService
             battle.Group1Id,
             battle.Group1.Name,
             battle.Group1.LogoUrl,
-            battle.Group2Id ?? Guid.Empty,
+            battle.Group2Id ?? 0,
             battle.Group2?.Name,
             battle.Group2?.LogoUrl,
             battle.Group1Score,

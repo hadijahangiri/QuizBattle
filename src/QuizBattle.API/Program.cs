@@ -4,11 +4,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using QuizBattle.Infrastructure;
+using QuizBattle.Application.Interfaces;
+using QuizBattle.Infrastructure.Services;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add Infrastructure services (DbContext, Identity, Repositories, Services)
 builder.Services.AddInfrastructure(builder.Configuration);
+
+var redisConnectionString = builder.Configuration["Redis:ConnectionString"];
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
+    builder.Services.AddSingleton<IMatchmakingStore, RedisMatchmakingStore>();
+}
 
 // Add Controllers
 builder.Services.AddControllers();
@@ -96,7 +106,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+var disableHttpsRedirection = builder.Configuration.GetValue<bool>("DisableHttpsRedirection");
+if (!disableHttpsRedirection)
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();

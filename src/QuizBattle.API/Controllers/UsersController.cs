@@ -24,7 +24,7 @@ public class UsersController : ControllerBase
     [HttpGet("me")]
     public async Task<ActionResult<UserDto>> GetMe()
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         var user = await _userService.GetByIdAsync(userId);
         if (user == null) return NotFound();
         return Ok(user);
@@ -36,7 +36,7 @@ public class UsersController : ControllerBase
     [HttpGet("me/profile")]
     public async Task<ActionResult<UserProfileDto>> GetMyProfile()
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         var profile = await _userService.GetProfileAsync(userId);
         if (profile == null) return NotFound();
         return Ok(profile);
@@ -46,7 +46,7 @@ public class UsersController : ControllerBase
     /// دریافت پروفایل عمومی کاربر دیگر (فقط اطلاعات عمومی)
     /// </summary>
     [HttpGet("{id}/profile")]
-    public async Task<ActionResult<UserProfileDto>> GetProfile(Guid id)
+    public async Task<ActionResult<UserProfileDto>> GetProfile(int id)
     {
         var profile = await _userService.GetProfileAsync(id);
         if (profile == null) return NotFound();
@@ -59,7 +59,7 @@ public class UsersController : ControllerBase
     [HttpPut("me")]
     public async Task<ActionResult<UserDto>> UpdateMe([FromBody] UpdateUserDto dto)
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         try
         {
             var user = await _userService.UpdateAsync(userId, dto);
@@ -77,7 +77,7 @@ public class UsersController : ControllerBase
     [HttpPost("me/convert-to-regular")]
     public async Task<ActionResult<UserDto>> ConvertToRegular([FromBody] ConvertGuestRequest request)
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         try
         {
             var user = await _userService.ConvertGuestToRegularAsync(userId, request.Email, request.PhoneNumber);
@@ -105,7 +105,7 @@ public class UsersController : ControllerBase
     [HttpPost("me/tutorial-completed")]
     public async Task<IActionResult> MarkTutorialCompleted()
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         await _userService.MarkTutorialCompletedAsync(userId);
         return NoContent();
     }

@@ -75,7 +75,7 @@ public class ShopController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> Edit(Guid id)
+    public async Task<IActionResult> Edit(int id)
     {
         var item = await _apiClient.GetStoreItemByIdAsync(id);
         if (item == null)
@@ -130,7 +130,7 @@ public class ShopController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(int id)
     {
         var result = await _apiClient.DeleteStoreItemAsync(id);
         if (result)

@@ -8,7 +8,7 @@ public enum GroupMemberRole
 }
 
 public record GroupDto(
-    Guid Id,
+    int Id,
     string Name,
     string? Description,
     string? LogoUrl,
@@ -21,8 +21,7 @@ public record GroupDto(
 );
 
 public record GroupMemberDto(
-    Guid Id,
-    Guid UserId,
+    int Id, int UserId,
     string Username,
     string AvatarUrl,
     GroupMemberRole Role,
@@ -31,8 +30,7 @@ public record GroupMemberDto(
 );
 
 public record GroupChatMessageDto(
-    Guid Id,
-    Guid SenderId,
+    int Id, int SenderId,
     string SenderUsername,
     string SenderAvatarUrl,
     string Message,
@@ -40,8 +38,7 @@ public record GroupChatMessageDto(
 );
 
 public record GroupBattleMemberDto(
-    Guid Id,
-    Guid UserId,
+    int Id, int UserId,
     string Username,
     string Avatar,
     string RoleLabel,
@@ -49,7 +46,7 @@ public record GroupBattleMemberDto(
 );
 
 public record GroupBattleInfo(
-    Guid BattleId,
+    int BattleId,
     string Status,
     int OurScore,
     int OpponentScore,

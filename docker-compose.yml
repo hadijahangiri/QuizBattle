@@ -1,0 +1,54 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "Your_password123"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: src/QuizBattle.API/Dockerfile
+    depends_on:
+      - db
+      - redis
+    environment:
+      ASPNETCORE_URLS: "http://+:80"
+      DisableHttpsRedirection: "true"
+      ConnectionStrings__DefaultConnection: "Server=db;Database=QuizBattleDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+      Redis__ConnectionString: "redis:6379"
+    ports:
+      - "5000:80"
+
+  admin:
+    build:
+      context: .
+      dockerfile: src/QuizBattle.AdminPanel/Dockerfile
+    depends_on:
+      - db
+    environment:
+      ASPNETCORE_URLS: "http://+:80"
+      DisableHttpsRedirection: "true"
+      ConnectionStrings__DefaultConnection: "Server=db;Database=QuizBattleDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;"
+    ports:
+      - "5001:80"
+
+  pwa:
+    build:
+      context: .
+      dockerfile: src/QuizBattle.PWA/Dockerfile
+    depends_on:
+      - api
+    environment:
+      ASPNETCORE_URLS: "http://+:80"
+      DisableHttpsRedirection: "true"
+    ports:
+      - "5002:80"

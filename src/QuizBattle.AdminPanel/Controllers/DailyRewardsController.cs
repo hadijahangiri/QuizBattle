@@ -79,7 +79,7 @@ public class DailyRewardsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> Edit(Guid id)
+    public async Task<IActionResult> Edit(int id)
     {
         var reward = await _unitOfWork.Repository<DailyReward>().GetByIdAsync(id);
         if (reward == null)
@@ -127,7 +127,7 @@ public class DailyRewardsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleActive(Guid id)
+    public async Task<IActionResult> ToggleActive(int id)
     {
         var reward = await _unitOfWork.Repository<DailyReward>().GetByIdAsync(id);
         if (reward == null)
@@ -147,7 +147,7 @@ public class DailyRewardsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(int id)
     {
         var reward = await _unitOfWork.Repository<DailyReward>().GetByIdAsync(id);
         if (reward == null)

@@ -63,7 +63,7 @@ public class CategoriesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> Edit(Guid id)
+    public async Task<IActionResult> Edit(int id)
     {
         var category = await _apiClient.GetCategoryByIdAsync(id);
         if (category == null)
@@ -107,7 +107,7 @@ public class CategoriesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(int id)
     {
         var result = await _apiClient.DeleteCategoryAsync(id);
         

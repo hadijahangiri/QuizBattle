@@ -17,7 +17,7 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         _dbSet = context.Set<T>();
     }
 
-    public async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _dbSet.FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);
     }

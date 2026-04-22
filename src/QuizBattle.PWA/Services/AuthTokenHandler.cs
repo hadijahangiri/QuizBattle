@@ -35,7 +35,7 @@ public class AuthTokenHandler : DelegatingHandler
         {
             // پاک کردن توکن و اطلاعات کاربر
             _appState.AuthToken = null;
-            _appState.CurrentUserId = Guid.Empty;
+            _appState.CurrentUserId = 0;
             _appState.NotifyUnauthorized();
         }
 

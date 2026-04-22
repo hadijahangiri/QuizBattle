@@ -24,7 +24,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<CategoryDto>> GetById(Guid id)
+    public async Task<ActionResult<CategoryDto>> GetById(int id)
     {
         var category = await _categoryService.GetByIdAsync(id);
         if (category == null) return NotFound();
@@ -41,7 +41,7 @@ public class CategoriesController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<CategoryDto>> Update(Guid id, [FromBody] CreateCategoryDto dto)
+    public async Task<ActionResult<CategoryDto>> Update(int id, [FromBody] CreateCategoryDto dto)
     {
         try
         {
@@ -56,7 +56,7 @@ public class CategoriesController : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(int id)
     {
         var result = await _categoryService.DeleteAsync(id);
         if (!result) return NotFound();

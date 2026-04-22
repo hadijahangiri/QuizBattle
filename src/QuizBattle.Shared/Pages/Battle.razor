@@ -1,5 +1,5 @@
 @page "/battle"
-@page "/battle/{GameId:guid}"
+@page "/battle/{GameId:int}"
 @using System.Net.Http.Json
 @using System.Timers
 @implements IDisposable
@@ -8,7 +8,6 @@
 @inject NavigationManager Navigation
 
 <div class="battle-container">
-    
     @if (isLoading)
     {
         <div class="loading">
@@ -19,6 +18,15 @@
     else if (isSearchingOpponent)
     {
         <div class="matchmaking-screen">
+
+               <div class="qok-battle-header">
+                    <div class="qok-battle-title-box">
+                        <span class="qok-battle-title">نبرد تن به تن</span>
+                        <button class="qok-header-back-btn" @onclick="GoHome" aria-label="بازگشت">
+                            <span>→</span>
+                        </button>
+                    </div>
+                </div>
             @if (opponentNotFound)
             {
                 <!-- حریف یافت نشد - همان صفحه -->
@@ -64,14 +72,15 @@
     {
         <!-- صفحه نبرد تن به تن -->
         <div class="battle-menu">
-            <div class="battle-home-panel">
-                <div class="battle-topbar">
-                    <div class="title-section">
-                        <span class="battle-logo">Quiz of Battle</span>
-                        <span class="battle-subtitle">نبرد تن به تن</span>
+
+               <div class="qok-battle-header section-card">
+                    <div class="qok-battle-title-box">
+                        <span class="qok-battle-title">نبرد تن به تن</span>
+                        <button class="qok-header-back-btn" @onclick="GoHome" aria-label="بازگشت">
+                            <span>→</span>
+                        </button>
                     </div>
                 </div>
-            </div>
 
             <div class="section-card">
                 <h3>🎮 بازی‌های فعال (@activeGames.Count/10)</h3>
@@ -93,6 +102,10 @@
                                     <div class="game-summary">
                                         <div class="game-result">نتیجه: @GetGameResult(game)</div>
                                         <div class="game-turn">وضعیت: @GetGameTurnStatus(game)</div>
+                                        @if (!string.IsNullOrEmpty(GetTurnRemainingTimeLabel(game)))
+                                        {
+                                            <div class="turn-timer">@GetTurnRemainingTimeLabel(game)</div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -150,21 +163,22 @@
     else
     {
         <!-- نمایش بازی -->
-        <GamePlay GameId="@gameId.Value" OnGameEnd="@LoadActiveGames" />
+        <GamePlay GameId="@gameId.Value" OnGameEnd="@CloseGame" />
     }
 </div>
 
 @code {
     [Parameter]
-    public Guid? GameId { get; set; }
+    public int? GameId { get; set; }
 
-    private Guid? gameId;
+    private int? gameId;
     private bool isLoading = true;
     private bool hasSearched = false;
     private bool isSearchingOpponent = false;
     private bool opponentNotFound = false;
     private int searchTime = 0;
     private Timer? searchTimer;
+    private Timer? turnCountdownTimer;
     private int targetSearchTime = 0;
     private string activeBattleTab = "competition";
     private List<GameDto> activeGames = new();
@@ -195,14 +209,22 @@
         finally
         {
             isLoading = false;
+            if (activeGames.Any())
+            {
+                StartTurnCountdown();
+            }
+            else
+            {
+                StopTurnCountdown();
+            }
         }
     }
 
-    private Guid GetCurrentUserId()
+    private int GetCurrentUserId()
     {
-        if (AppState.CurrentUserId == Guid.Empty)
+        if (AppState.CurrentUserId == 0)
         {
-            AppState.CurrentUserId = Guid.NewGuid();
+            AppState.CurrentUserId = new Random().Next(1, int.MaxValue);
             AppState.IsGuest = true;
             AppState.NotifyStateChanged();
         }
@@ -224,9 +246,16 @@
         StateHasChanged();
     }
 
-    private void OpenGame(Guid id)
+    private void OpenGame(int id)
     {
         gameId = id;
+        StateHasChanged();
+    }
+
+    private async Task CloseGame()
+    {
+        gameId = null;
+        await LoadActiveGames();
         StateHasChanged();
     }
 
@@ -283,7 +312,60 @@
         var myTurn = (isOddRound && isPlayer1) || (!isOddRound && !isPlayer1);
         return myTurn ? "نوبت تو" : "نوبت حریف";
     }
-    
+
+    private void StartTurnCountdown()
+    {
+        if (turnCountdownTimer != null)
+        {
+            return;
+        }
+
+        turnCountdownTimer = new Timer(1000);
+        turnCountdownTimer.Elapsed += async (s, e) => await InvokeAsync(StateHasChanged);
+        turnCountdownTimer.Start();
+    }
+
+    private void StopTurnCountdown()
+    {
+        turnCountdownTimer?.Stop();
+        turnCountdownTimer?.Dispose();
+        turnCountdownTimer = null;
+    }
+
+    private string GetTurnRemainingTimeLabel(GameDto game)
+    {
+        var start = game.LastActivityAt != default ? game.LastActivityAt : game.CreatedAt;
+        if (start == default)
+        {
+            return string.Empty;
+        }
+
+        var startUtc = start.Kind == DateTimeKind.Utc ? start : DateTime.SpecifyKind(start, DateTimeKind.Utc);
+        var elapsed = DateTime.UtcNow - startUtc;
+        var remaining = TimeSpan.FromHours(game.TimeoutHours > 0 ? game.TimeoutHours : 12) - elapsed;
+
+        if (remaining <= TimeSpan.Zero)
+        {
+            return "زمان تمام شده";
+        }
+
+        return $"زمان باقیمانده: {FormatRemainingTime(remaining)}";
+    }
+
+    private string FormatRemainingTime(TimeSpan remaining)
+    {
+        var hours = (int)remaining.TotalHours;
+        var mins = remaining.Minutes;
+        var secs = remaining.Seconds;
+
+        if (hours > 0)
+        {
+            return $"{hours:D2}:{mins:D2}:{secs:D2}";
+        }
+
+        return $"{mins:D2}:{secs:D2}";
+    }
+
     private void OnSearchKeyPress(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
@@ -313,7 +395,7 @@
                 .Where(n => n.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
                 .Select((name, i) => new UserProfileDto
                 {
-                    Id = Guid.NewGuid(),
+                    Id = new Random().Next(1, int.MaxValue),
                     Username = name,
                     AvatarUrl = mockAvatars[i % mockAvatars.Length],
                     Level = random.Next(1, 20),
@@ -326,7 +408,7 @@
                 searchResults = Enumerable.Range(0, 3)
                     .Select(i => new UserProfileDto
                     {
-                        Id = Guid.NewGuid(),
+                        Id = new Random().Next(1, int.MaxValue),
                         Username = mockNames[random.Next(mockNames.Length)] + random.Next(10, 99),
                         AvatarUrl = mockAvatars[random.Next(mockAvatars.Length)],
                         Level = random.Next(1, 20),
@@ -449,16 +531,18 @@
         var random = new Random();
         return new GameDto
         {
-            Id = Guid.NewGuid(),
+            Id = new Random().Next(1, int.MaxValue),
             Player1Id = GetCurrentUserId(),
             Player1Username = AppState.Username ?? "شما",
             Player1AvatarUrl = AppState.AvatarUrl ?? "😎",
-            Player2Id = Guid.NewGuid(),
+            Player2Id = new Random().Next(1, int.MaxValue),
             Player2Username = mockNames[random.Next(mockNames.Length)],
             Player2AvatarUrl = mockAvatars[random.Next(mockAvatars.Length)],
             CurrentRound = 1,
             Player1Score = 0,
-            Player2Score = 0
+            Player2Score = 0,
+            CreatedAt = DateTime.UtcNow,
+            LastActivityAt = DateTime.UtcNow
         };
     }
     
@@ -468,7 +552,7 @@
         return colors[Math.Abs(name.GetHashCode()) % colors.Length];
     }
 
-    private async Task ChallengeUser(Guid opponentId)
+    private async Task ChallengeUser(int opponentId)
     {
         var opponent = searchResults.FirstOrDefault(u => u.Id == opponentId);
         if (opponent == null) return;
@@ -500,7 +584,7 @@
 
         var fallbackGame = new GameDto
         {
-            Id = Guid.NewGuid(),
+            Id = new Random().Next(1, int.MaxValue),
             Player1Id = GetCurrentUserId(),
             Player1Username = AppState.Username ?? "شما",
             Player1AvatarUrl = AppState.AvatarUrl ?? "😎",
@@ -509,7 +593,10 @@
             Player2AvatarUrl = opponent.AvatarUrl,
             CurrentRound = 1,
             Player1Score = 0,
-            Player2Score = 0
+            Player2Score = 0,
+            CreatedAt = DateTime.UtcNow,
+            LastActivityAt = DateTime.UtcNow,
+            TimeoutHours = 12
         };
 
         gameId = fallbackGame.Id;
@@ -524,25 +611,26 @@
 
     public class GameDto
     {
-        public Guid Id { get; set; }
-        public Guid Player1Id { get; set; }
+        public int Id { get; set; }
+        public int Player1Id { get; set; }
         public string Player1Username { get; set; } = "";
         public string Player1AvatarUrl { get; set; } = "";
-        public Guid Player2Id { get; set; }
+        public int Player2Id { get; set; }
         public string Player2Username { get; set; } = "";
         public string Player2AvatarUrl { get; set; } = "";
         public int Player1Score { get; set; }
         public int Player2Score { get; set; }
         public int CurrentRound { get; set; }
         public int Status { get; set; }
-        public Guid? WinnerId { get; set; }
+        public int? WinnerId { get; set; }
+        public int TimeoutHours { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime LastActivityAt { get; set; }
     }
 
     public class UserProfileDto
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public string Username { get; set; } = "";
         public string AvatarUrl { get; set; } = "";
         public int Score { get; set; }
@@ -553,15 +641,12 @@
     }
 
     public record MatchmakingResultDto(
-        bool IsMatched,
-        Guid? GameId,
+        bool IsMatched, int? GameId,
         string? OpponentUsername,
         string? OpponentAvatarUrl,
         bool InQueue
     );
 
-    public record CreateGameDto(
-        Guid ChallengerId,
-        Guid OpponentId
+    public record CreateGameDto(int ChallengerId, int OpponentId
     );
 }

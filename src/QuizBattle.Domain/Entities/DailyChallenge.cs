@@ -19,8 +19,8 @@ public class DailyChallenge : BaseEntity
 /// </summary>
 public class DailyChallengeQuestion : BaseEntity
 {
-    public Guid DailyChallengeId { get; set; }
-    public Guid QuestionId { get; set; }
+    public int DailyChallengeId { get; set; }
+    public int QuestionId { get; set; }
     public int QuestionOrder { get; set; }
     
     // روابط
@@ -33,8 +33,8 @@ public class DailyChallengeQuestion : BaseEntity
 /// </summary>
 public class DailyChallengeResult : BaseEntity
 {
-    public Guid DailyChallengeId { get; set; }
-    public Guid UserId { get; set; }
+    public int DailyChallengeId { get; set; }
+    public int UserId { get; set; }
     public int CorrectAnswers { get; set; } = 0;
     public int TotalTimeSpent { get; set; } = 0; // میلی‌ثانیه
     public int Score { get; set; } = 0;
@@ -52,9 +52,9 @@ public class DailyChallengeResult : BaseEntity
 /// </summary>
 public class DailyChallengeAnswer : BaseEntity
 {
-    public Guid DailyChallengeResultId { get; set; }
-    public Guid QuestionId { get; set; }
-    public Guid? AnswerId { get; set; }
+    public int DailyChallengeResultId { get; set; }
+    public int QuestionId { get; set; }
+    public int? AnswerId { get; set; }
     public int TimeSpent { get; set; } = 0;
     public bool IsCorrect { get; set; } = false;
     public int Score { get; set; } = 0;

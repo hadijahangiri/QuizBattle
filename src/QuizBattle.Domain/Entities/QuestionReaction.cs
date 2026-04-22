@@ -7,13 +7,13 @@ namespace QuizBattle.Domain.Entities;
 /// </summary>
 public class QuestionReactionEntity : BaseEntity
 {
-    public Guid UserId { get; set; }
-    public Guid QuestionId { get; set; }
+    public int UserId { get; set; }
+    public int QuestionId { get; set; }
     public QuestionReaction Reaction { get; set; }
     public string? ReportReason { get; set; } // در صورت گزارش
     public bool IsReviewed { get; set; } = false; // برای گزارش‌ها
     public DateTime? ReviewedAt { get; set; }
-    public Guid? ReviewedById { get; set; }
+    public int? ReviewedById { get; set; }
     
     // روابط
     public virtual User User { get; set; } = null!;

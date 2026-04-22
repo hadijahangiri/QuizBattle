@@ -17,7 +17,7 @@ public class DailyRewardsController : ControllerBase
     }
 
     [HttpGet("status/{userId}")]
-    public async Task<ActionResult<DailyRewardStatusDto>> GetStatus(Guid userId)
+    public async Task<ActionResult<DailyRewardStatusDto>> GetStatus(int userId)
     {
         try
         {
@@ -31,7 +31,7 @@ public class DailyRewardsController : ControllerBase
     }
 
     [HttpPost("claim/{userId}")]
-    public async Task<ActionResult<ClaimDailyRewardResultDto>> Claim(Guid userId)
+    public async Task<ActionResult<ClaimDailyRewardResultDto>> Claim(int userId)
     {
         var result = await _dailyRewardService.ClaimRewardAsync(userId);
         return Ok(result);

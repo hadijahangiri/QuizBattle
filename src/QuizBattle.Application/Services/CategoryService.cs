@@ -26,7 +26,7 @@ public class CategoryService : ICategoryService
         return categories.Select(MapToDto).ToList();
     }
 
-    public async Task<CategoryDto?> GetByIdAsync(Guid id)
+    public async Task<CategoryDto?> GetByIdAsync(int id)
     {
         var category = await _unitOfWork.Repository<Category>()
             .Query()
@@ -51,7 +51,7 @@ public class CategoryService : ICategoryService
         return MapToDto(category);
     }
 
-    public async Task<CategoryDto> UpdateAsync(Guid id, CreateCategoryDto dto)
+    public async Task<CategoryDto> UpdateAsync(int id, CreateCategoryDto dto)
     {
         var category = await _unitOfWork.Repository<Category>().GetByIdAsync(id);
         if (category == null)
@@ -68,7 +68,7 @@ public class CategoryService : ICategoryService
         return MapToDto(category);
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(int id)
     {
         var category = await _unitOfWork.Repository<Category>().GetByIdAsync(id);
         if (category == null) return false;

@@ -32,7 +32,7 @@ public class QuestionsController : ControllerBase
     /// دریافت سوال با شناسه
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<QuestionDto>> GetById(Guid id)
+    public async Task<ActionResult<QuestionDto>> GetById(int id)
     {
         var question = await _questionService.GetByIdAsync(id);
         if (question == null) return NotFound();
@@ -43,7 +43,7 @@ public class QuestionsController : ControllerBase
     /// دریافت سوالات یک دسته‌بندی (بدون پاسخ صحیح)
     /// </summary>
     [HttpGet("category/{categoryId}")]
-    public async Task<ActionResult<List<QuestionDto>>> GetByCategory(Guid categoryId, [FromQuery] int count = 3)
+    public async Task<ActionResult<List<QuestionDto>>> GetByCategory(int categoryId, [FromQuery] int count = 3)
     {
         var questions = await _questionService.GetByCategoryAsync(categoryId, count);
         return Ok(questions);
@@ -53,7 +53,7 @@ public class QuestionsController : ControllerBase
     /// دریافت سوالات یک دسته‌بندی با پاسخ صحیح (برای بازی)
     /// </summary>
     [HttpGet("category/{categoryId}/with-answers")]
-    public async Task<ActionResult<List<QuestionWithCorrectAnswerDto>>> GetWithAnswersByCategory(Guid categoryId, [FromQuery] int count = 3)
+    public async Task<ActionResult<List<QuestionWithCorrectAnswerDto>>> GetWithAnswersByCategory(int categoryId, [FromQuery] int count = 3)
     {
         var questions = await _questionService.GetWithAnswersByCategoryAsync(categoryId, count);
         return Ok(questions);
@@ -99,7 +99,7 @@ public class QuestionsController : ControllerBase
     /// </summary>
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<QuestionDto>> Update(Guid id, [FromBody] CreateQuestionDto dto)
+    public async Task<ActionResult<QuestionDto>> Update(int id, [FromBody] CreateQuestionDto dto)
     {
         try
         {
@@ -117,7 +117,7 @@ public class QuestionsController : ControllerBase
     /// </summary>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(int id)
     {
         var result = await _questionService.DeleteAsync(id);
         if (!result) return NotFound();
@@ -152,7 +152,7 @@ public class QuestionsController : ControllerBase
     /// </summary>
     [HttpPost("{id}/review")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> ReviewReport(Guid id, [FromBody] ReviewReportRequest request)
+    public async Task<IActionResult> ReviewReport(int id, [FromBody] ReviewReportRequest request)
     {
         var result = await _questionService.ReviewReportAsync(id, request.Approve);
         if (!result) return NotFound();
@@ -160,7 +160,7 @@ public class QuestionsController : ControllerBase
     }
 }
 
-public record QuestionReactionRequest(Guid UserId, QuestionReactionDto Reaction);
+public record QuestionReactionRequest(int UserId, QuestionReactionDto Reaction);
 public record ReviewReportRequest(bool Approve);
-public record CategoryWithQuestionsDto(Guid Id, string Name, string? Description, string? IconUrl, List<QuestionWithCorrectAnswerDto> Questions);
+public record CategoryWithQuestionsDto(int Id, string Name, string? Description, string? IconUrl, List<QuestionWithCorrectAnswerDto> Questions);
 public record CategoriesWithQuestionsDto(List<CategoryWithQuestionsDto> Categories);

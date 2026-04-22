@@ -31,7 +31,7 @@ public class GroupBattlesController : ControllerBase
     }
 
     [HttpGet("group/{groupId}/active")]
-    public async Task<ActionResult<GroupBattleDto>> GetActiveBattle(Guid groupId)
+    public async Task<ActionResult<GroupBattleDto>> GetActiveBattle(int groupId)
     {
         var battle = await _groupBattleService.GetActiveBattleAsync(groupId);
         if (battle == null) return NotFound();
@@ -39,14 +39,14 @@ public class GroupBattlesController : ControllerBase
     }
 
     [HttpGet("group/{groupId}")]
-    public async Task<ActionResult<List<GroupBattleDto>>> GetGroupBattles(Guid groupId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<ActionResult<List<GroupBattleDto>>> GetGroupBattles(int groupId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         var battles = await _groupBattleService.GetGroupBattlesAsync(groupId, page, pageSize);
         return Ok(battles);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<GroupBattleDto>> GetById(Guid id)
+    public async Task<ActionResult<GroupBattleDto>> GetById(int id)
     {
         var battle = await _groupBattleService.GetByIdAsync(id);
         if (battle == null) return NotFound();

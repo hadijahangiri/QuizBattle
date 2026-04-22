@@ -267,8 +267,7 @@
         Navigation.NavigateTo("/");
     }
 
-    public record UserDto(
-        Guid Id,
+    public record UserDto(int Id,
         string Username,
         string? Email,
         string? PhoneNumber,
@@ -284,5 +283,5 @@
         bool HasCompletedTutorial
     );
 
-    public record AuthResultDto(Guid UserId, string Username, string AvatarUrl, string Token);
+    public record AuthResultDto(int UserId, string Username, string AvatarUrl, string Token);
 }

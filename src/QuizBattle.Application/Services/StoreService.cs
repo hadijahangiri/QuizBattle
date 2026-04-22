@@ -26,7 +26,7 @@ public class StoreService : IStoreService
         return items.OrderBy(x => x.OrderIndex).Select(MapToDto).ToList();
     }
 
-    public async Task<StoreItemDto?> GetItemByIdAsync(Guid id)
+    public async Task<StoreItemDto?> GetItemByIdAsync(int id)
     {
         var item = await _unitOfWork.Repository<StoreItem>().GetByIdAsync(id);
         return item == null ? null : MapToDto(item);
@@ -53,7 +53,7 @@ public class StoreService : IStoreService
         return MapToDto(item);
     }
 
-    public async Task<StoreItemDto> UpdateItemAsync(Guid id, CreateStoreItemDto dto)
+    public async Task<StoreItemDto> UpdateItemAsync(int id, CreateStoreItemDto dto)
     {
         var item = await _unitOfWork.Repository<StoreItem>().GetByIdAsync(id);
         if (item == null)
@@ -75,7 +75,7 @@ public class StoreService : IStoreService
         return MapToDto(item);
     }
 
-    public async Task<bool> DeleteItemAsync(Guid id)
+    public async Task<bool> DeleteItemAsync(int id)
     {
         var item = await _unitOfWork.Repository<StoreItem>().GetByIdAsync(id);
         if (item == null) return false;
@@ -85,7 +85,7 @@ public class StoreService : IStoreService
         return true;
     }
 
-    public async Task<bool> ToggleActiveAsync(Guid id)
+    public async Task<bool> ToggleActiveAsync(int id)
     {
         var item = await _unitOfWork.Repository<StoreItem>().GetByIdAsync(id);
         if (item == null) return false;
@@ -98,7 +98,7 @@ public class StoreService : IStoreService
         return true;
     }
 
-    public Task<PurchaseResultDto> PurchaseAsync(Guid userId, PurchaseRequestDto dto)
+    public Task<PurchaseResultDto> PurchaseAsync(int userId, PurchaseRequestDto dto)
     {
         // TODO: Implement payment gateway integration
         throw new NotImplementedException("پرداخت هنوز پیاده‌سازی نشده است");
@@ -110,13 +110,13 @@ public class StoreService : IStoreService
         throw new NotImplementedException("تایید پرداخت هنوز پیاده‌سازی نشده است");
     }
 
-    public Task<bool> GiftCoinsAsync(Guid senderId, GiftCoinsDto dto)
+    public Task<bool> GiftCoinsAsync(int senderId, GiftCoinsDto dto)
     {
         // TODO: Implement coin gifting
         throw new NotImplementedException("هدیه سکه هنوز پیاده‌سازی نشده است");
     }
 
-    public async Task<List<TransactionDto>> GetUserTransactionsAsync(Guid userId, int page = 1, int pageSize = 20)
+    public async Task<List<TransactionDto>> GetUserTransactionsAsync(int userId, int page = 1, int pageSize = 20)
     {
         var transactions = await _unitOfWork.Repository<Transaction>()
             .FindAsync(t => t.UserId == userId);

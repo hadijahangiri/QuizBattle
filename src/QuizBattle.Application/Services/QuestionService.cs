@@ -15,7 +15,7 @@ public class QuestionService : IQuestionService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<QuestionDto?> GetByIdAsync(Guid id)
+    public async Task<QuestionDto?> GetByIdAsync(int id)
     {
         var question = await _unitOfWork.Repository<Question>()
             .Query()
@@ -26,7 +26,7 @@ public class QuestionService : IQuestionService
         return question == null ? null : MapToDto(question);
     }
 
-    public async Task<List<QuestionDto>> GetByCategoryAsync(Guid categoryId, int count = 3)
+    public async Task<List<QuestionDto>> GetByCategoryAsync(int categoryId, int count = 3)
     {
         var questions = await _unitOfWork.Repository<Question>()
             .Query()
@@ -56,7 +56,7 @@ public class QuestionService : IQuestionService
         return questions.Select(MapToDto).ToList();
     }
 
-    public async Task<List<QuestionWithCorrectAnswerDto>> GetWithAnswersByCategoryAsync(Guid categoryId, int count = 3)
+    public async Task<List<QuestionWithCorrectAnswerDto>> GetWithAnswersByCategoryAsync(int categoryId, int count = 3)
     {
         var questions = await _unitOfWork.Repository<Question>()
             .Query()
@@ -115,7 +115,7 @@ public class QuestionService : IQuestionService
         return created!;
     }
 
-    public async Task<QuestionDto> UpdateAsync(Guid id, CreateQuestionDto dto)
+    public async Task<QuestionDto> UpdateAsync(int id, CreateQuestionDto dto)
     {
         var question = await _unitOfWork.Repository<Question>()
             .Query()
@@ -155,7 +155,7 @@ public class QuestionService : IQuestionService
         return updated!;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(int id)
     {
         var question = await _unitOfWork.Repository<Question>().GetByIdAsync(id);
         if (question == null) return false;
@@ -169,7 +169,7 @@ public class QuestionService : IQuestionService
         return true;
     }
 
-    public async Task<bool> ReactToQuestionAsync(Guid userId, QuestionReactionDto dto)
+    public async Task<bool> ReactToQuestionAsync(int userId, QuestionReactionDto dto)
     {
         var question = await _unitOfWork.Repository<Question>().GetByIdAsync(dto.QuestionId);
         if (question == null) return false;
@@ -256,7 +256,7 @@ public class QuestionService : IQuestionService
         return new PaginatedResultDto<ReportedQuestionDto>(items, totalCount, page, pageSize, (int)Math.Ceiling((double)totalCount / pageSize));
     }
 
-    public async Task<bool> ReviewReportAsync(Guid questionId, bool approve)
+    public async Task<bool> ReviewReportAsync(int questionId, bool approve)
     {
         var question = await _unitOfWork.Repository<Question>().GetByIdAsync(questionId);
         if (question == null) return false;

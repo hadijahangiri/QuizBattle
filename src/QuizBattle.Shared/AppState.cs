@@ -4,7 +4,7 @@ namespace QuizBattle.Shared;
 
 public class AppState
 {
-    public Guid CurrentUserId { get; set; } = Guid.Empty;
+    public int CurrentUserId { get; set; } = 0;
     public string Username { get; set; } = "کاربر QuizBattle";
     public string? AvatarUrl { get; set; } = "icon-192.png";
     public string? UserAvatar { get; set; } = "icon-192.png";
@@ -38,7 +38,7 @@ public class AppState
 
     public event Action? OnChange;
 
-    public bool IsLoggedIn => CurrentUserId != Guid.Empty && !string.IsNullOrEmpty(AuthToken);
+    public bool IsLoggedIn => CurrentUserId != 0 && !string.IsNullOrEmpty(AuthToken);
 
     public void NotifyStateChanged() => OnChange?.Invoke();
 

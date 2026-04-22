@@ -30,7 +30,7 @@ public class StoreController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<StoreItemDto>> GetById(Guid id)
+    public async Task<ActionResult<StoreItemDto>> GetById(int id)
     {
         var item = await _storeService.GetItemByIdAsync(id);
         if (item == null) return NotFound();
@@ -45,7 +45,7 @@ public class StoreController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<StoreItemDto>> Update(Guid id, [FromBody] CreateStoreItemDto dto)
+    public async Task<ActionResult<StoreItemDto>> Update(int id, [FromBody] CreateStoreItemDto dto)
     {
         try
         {
@@ -59,7 +59,7 @@ public class StoreController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(int id)
     {
         var result = await _storeService.DeleteItemAsync(id);
         if (!result) return NotFound();
@@ -67,7 +67,7 @@ public class StoreController : ControllerBase
     }
 
     [HttpPost("{id}/toggle-active")]
-    public async Task<IActionResult> ToggleActive(Guid id)
+    public async Task<IActionResult> ToggleActive(int id)
     {
         var result = await _storeService.ToggleActiveAsync(id);
         if (!result) return NotFound();

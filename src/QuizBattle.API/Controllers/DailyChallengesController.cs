@@ -17,7 +17,7 @@ public class DailyChallengesController : ControllerBase
     }
 
     [HttpGet("today")]
-    public async Task<ActionResult<DailyChallengeDto>> GetTodayChallenge([FromQuery] Guid? userId = null)
+    public async Task<ActionResult<DailyChallengeDto>> GetTodayChallenge([FromQuery] int? userId = null)
     {
         var challenge = await _dailyChallengeService.GetTodayChallengeAsync(userId);
         if (challenge == null) return NotFound("چالش روزانه هنوز ایجاد نشده است");
@@ -26,7 +26,7 @@ public class DailyChallengesController : ControllerBase
 
     [HttpGet("{id}/questions")]
     [Authorize]
-    public async Task<ActionResult<List<DailyChallengeQuestionDto>>> GetQuestions(Guid id)
+    public async Task<ActionResult<List<DailyChallengeQuestionDto>>> GetQuestions(int id)
     {
         var questions = await _dailyChallengeService.GetChallengeQuestionsAsync(id);
         return Ok(questions);
@@ -48,7 +48,7 @@ public class DailyChallengesController : ControllerBase
     }
 
     [HttpGet("{id}/result/{userId}")]
-    public async Task<ActionResult<DailyChallengeResultDto>> GetUserResult(Guid id, Guid userId)
+    public async Task<ActionResult<DailyChallengeResultDto>> GetUserResult(int id, int userId)
     {
         var result = await _dailyChallengeService.GetUserResultAsync(id, userId);
         if (result == null) return NotFound();
@@ -56,11 +56,11 @@ public class DailyChallengesController : ControllerBase
     }
 
     [HttpGet("{id}/leaderboard")]
-    public async Task<ActionResult<DailyChallengeLeaderboardDto>> GetLeaderboard(Guid id, [FromQuery] int limit = 100)
+    public async Task<ActionResult<DailyChallengeLeaderboardDto>> GetLeaderboard(int id, [FromQuery] int limit = 100)
     {
         var leaderboard = await _dailyChallengeService.GetLeaderboardAsync(id, limit);
         return Ok(leaderboard);
     }
 }
 
-public record SubmitDailyChallengeRequest(Guid UserId, SubmitDailyChallengeAnswerDto Answer);
+public record SubmitDailyChallengeRequest(int UserId, SubmitDailyChallengeAnswerDto Answer);

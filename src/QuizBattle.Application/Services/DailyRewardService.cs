@@ -14,7 +14,7 @@ public class DailyRewardService : IDailyRewardService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<DailyRewardStatusDto> GetStatusAsync(Guid userId)
+    public async Task<DailyRewardStatusDto> GetStatusAsync(int userId)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(userId);
         if (user == null)
@@ -56,7 +56,7 @@ public class DailyRewardService : IDailyRewardService
         );
     }
 
-    public async Task<ClaimDailyRewardResultDto> ClaimRewardAsync(Guid userId)
+    public async Task<ClaimDailyRewardResultDto> ClaimRewardAsync(int userId)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(userId);
         if (user == null)

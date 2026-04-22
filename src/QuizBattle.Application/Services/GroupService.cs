@@ -17,7 +17,7 @@ public class GroupService : IGroupService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<GroupDto> CreateAsync(Guid ownerId, CreateGroupDto dto)
+    public async Task<GroupDto> CreateAsync(int ownerId, CreateGroupDto dto)
     {
         // بررسی حداکثر تعداد گروه‌های ساخته شده
         var ownedCount = await GetOwnedGroupsCountAsync(ownerId);
@@ -55,7 +55,7 @@ public class GroupService : IGroupService
         return await GetByIdAsync(group.Id) ?? throw new Exception("خطا در ایجاد گروه");
     }
 
-    public async Task<GroupDto?> GetByIdAsync(Guid id)
+    public async Task<GroupDto?> GetByIdAsync(int id)
     {
         var group = await _unitOfWork.Repository<Group>()
             .Query()
@@ -77,7 +77,7 @@ public class GroupService : IGroupService
         return group == null ? null : MapToDto(group);
     }
 
-    public async Task<GroupDto> UpdateAsync(Guid id, Guid userId, UpdateGroupDto dto)
+    public async Task<GroupDto> UpdateAsync(int id, int userId, UpdateGroupDto dto)
     {
         var group = await _unitOfWork.Repository<Group>().GetByIdAsync(id);
         if (group == null)
@@ -100,7 +100,7 @@ public class GroupService : IGroupService
         return await GetByIdAsync(id) ?? throw new Exception("خطا در بروزرسانی گروه");
     }
 
-    public async Task<bool> DeleteAsync(Guid id, Guid userId)
+    public async Task<bool> DeleteAsync(int id, int userId)
     {
         var group = await _unitOfWork.Repository<Group>().GetByIdAsync(id);
         if (group == null) return false;
@@ -152,7 +152,7 @@ public class GroupService : IGroupService
         );
     }
 
-    public async Task<List<GroupDto>> GetUserGroupsAsync(Guid userId)
+    public async Task<List<GroupDto>> GetUserGroupsAsync(int userId)
     {
         var memberships = await _unitOfWork.Repository<GroupMember>()
             .Query()
@@ -164,7 +164,7 @@ public class GroupService : IGroupService
         return memberships.Select(m => MapToDto(m.Group)).ToList();
     }
 
-    public async Task<List<GroupDto>> GetOwnedGroupsAsync(Guid userId)
+    public async Task<List<GroupDto>> GetOwnedGroupsAsync(int userId)
     {
         var groups = await _unitOfWork.Repository<Group>()
             .Query()
@@ -175,7 +175,7 @@ public class GroupService : IGroupService
         return groups.Select(MapToDto).ToList();
     }
 
-    public async Task<List<GroupMemberDto>> GetMembersAsync(Guid groupId)
+    public async Task<List<GroupMemberDto>> GetMembersAsync(int groupId)
     {
         var members = await _unitOfWork.Repository<GroupMember>()
             .Query()
@@ -196,7 +196,7 @@ public class GroupService : IGroupService
         )).ToList();
     }
 
-    public async Task<bool> RequestMembershipAsync(Guid groupId, Guid userId, string? message = null)
+    public async Task<bool> RequestMembershipAsync(int groupId, int userId, string? message = null)
     {
         // بررسی حداکثر تعداد گروه‌ها
         var memberCount = await GetUserGroupsCountAsync(userId);
@@ -230,7 +230,7 @@ public class GroupService : IGroupService
         return true;
     }
 
-    public async Task<List<MembershipRequestDto>> GetMembershipRequestsAsync(Guid groupId, Guid userId)
+    public async Task<List<MembershipRequestDto>> GetMembershipRequestsAsync(int groupId, int userId)
     {
         // فقط مالک و ادمین می‌توانند درخواست‌ها را ببینند
         var member = await _unitOfWork.Repository<GroupMember>()
@@ -257,7 +257,7 @@ public class GroupService : IGroupService
         )).ToList();
     }
 
-    public async Task<bool> ApproveMembershipAsync(Guid requestId, Guid approverId)
+    public async Task<bool> ApproveMembershipAsync(int requestId, int approverId)
     {
         var request = await _unitOfWork.Repository<GroupMembershipRequest>()
             .Query()
@@ -297,7 +297,7 @@ public class GroupService : IGroupService
         return true;
     }
 
-    public async Task<bool> RejectMembershipAsync(Guid requestId, Guid approverId)
+    public async Task<bool> RejectMembershipAsync(int requestId, int approverId)
     {
         var request = await _unitOfWork.Repository<GroupMembershipRequest>().GetByIdAsync(requestId);
         if (request == null) return false;
@@ -319,7 +319,7 @@ public class GroupService : IGroupService
         return true;
     }
 
-    public async Task<bool> KickMemberAsync(Guid groupId, Guid memberId, Guid kickerId)
+    public async Task<bool> KickMemberAsync(int groupId, int memberId, int kickerId)
     {
         var kicker = await _unitOfWork.Repository<GroupMember>()
             .FirstOrDefaultAsync(gm => gm.GroupId == groupId && gm.UserId == kickerId);
@@ -351,7 +351,7 @@ public class GroupService : IGroupService
         return true;
     }
 
-    public async Task<bool> LeaveGroupAsync(Guid groupId, Guid userId)
+    public async Task<bool> LeaveGroupAsync(int groupId, int userId)
     {
         var member = await _unitOfWork.Repository<GroupMember>()
             .FirstOrDefaultAsync(gm => gm.GroupId == groupId && gm.UserId == userId);
@@ -376,7 +376,7 @@ public class GroupService : IGroupService
         return true;
     }
 
-    public async Task<bool> PromoteMemberAsync(Guid groupId, Guid memberId, Guid promoterId, GroupRole newRole)
+    public async Task<bool> PromoteMemberAsync(int groupId, int memberId, int promoterId, GroupRole newRole)
     {
         var promoter = await _unitOfWork.Repository<GroupMember>()
             .FirstOrDefaultAsync(gm => gm.GroupId == groupId && gm.UserId == promoterId);
@@ -396,7 +396,7 @@ public class GroupService : IGroupService
         return true;
     }
 
-    public async Task<List<GroupChatMessageDto>> GetChatMessagesAsync(Guid groupId, int page = 1, int pageSize = 50)
+    public async Task<List<GroupChatMessageDto>> GetChatMessagesAsync(int groupId, int page = 1, int pageSize = 50)
     {
         var messages = await _unitOfWork.Repository<GroupChat>()
             .Query()
@@ -417,7 +417,7 @@ public class GroupService : IGroupService
         )).ToList();
     }
 
-    public async Task<GroupChatMessageDto> SendMessageAsync(Guid userId, SendGroupChatDto dto)
+    public async Task<GroupChatMessageDto> SendMessageAsync(int userId, SendGroupChatDto dto)
     {
         var group = await _unitOfWork.Repository<Group>().GetByIdAsync(dto.GroupId);
         if (group == null)
@@ -454,7 +454,7 @@ public class GroupService : IGroupService
         );
     }
 
-    public async Task<bool> DeleteMessageAsync(Guid messageId, Guid userId)
+    public async Task<bool> DeleteMessageAsync(int messageId, int userId)
     {
         var message = await _unitOfWork.Repository<GroupChat>().GetByIdAsync(messageId);
         if (message == null) return false;
@@ -473,7 +473,7 @@ public class GroupService : IGroupService
         return true;
     }
 
-    public async Task<bool> ToggleChatAsync(Guid groupId, Guid userId, bool enabled)
+    public async Task<bool> ToggleChatAsync(int groupId, int userId, bool enabled)
     {
         var group = await _unitOfWork.Repository<Group>().GetByIdAsync(groupId);
         if (group == null) return false;
@@ -489,7 +489,7 @@ public class GroupService : IGroupService
         return true;
     }
 
-    public async Task<int> GetUserGroupsCountAsync(Guid userId)
+    public async Task<int> GetUserGroupsCountAsync(int userId)
     {
         return await _unitOfWork.Repository<GroupMember>()
             .Query()
@@ -497,7 +497,7 @@ public class GroupService : IGroupService
             .CountAsync(gm => gm.UserId == userId && !gm.Group.IsDeleted);
     }
 
-    public async Task<int> GetOwnedGroupsCountAsync(Guid userId)
+    public async Task<int> GetOwnedGroupsCountAsync(int userId)
     {
         return await _unitOfWork.Repository<Group>()
             .CountAsync(g => g.OwnerId == userId && !g.IsDeleted);

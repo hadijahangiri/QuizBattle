@@ -56,7 +56,7 @@ public class AuthController : ControllerBase
     /// دریافت توکن جدید برای کاربر موجود (refresh)
     /// </summary>
     [HttpPost("refresh/{userId}")]
-    public async Task<ActionResult<AuthResultDto>> RefreshToken(Guid userId)
+    public async Task<ActionResult<AuthResultDto>> RefreshToken(int userId)
     {
         var user = await _userService.GetByIdAsync(userId);
         if (user == null)
@@ -67,7 +67,7 @@ public class AuthController : ControllerBase
         return Ok(new AuthResultDto(user.Id, user.Username, user.AvatarUrl ?? "", token));
     }
 
-    private string GenerateJwtToken(Guid userId, string username)
+    private string GenerateJwtToken(int userId, string username)
     {
         var key = _configuration["Jwt:Key"] ?? "QuizBattleSecretKey123456789012345678901234";
         var issuer = _configuration["Jwt:Issuer"] ?? "QuizBattle";
@@ -98,4 +98,4 @@ public class AuthController : ControllerBase
 // DTOs
 public record GuestLoginRequest(string Username, string AvatarUrl);
 public record LoginRequest(string EmailOrPhone);
-public record AuthResultDto(Guid UserId, string Username, string AvatarUrl, string Token);
+public record AuthResultDto(int UserId, string Username, string AvatarUrl, string Token);

@@ -320,7 +320,7 @@
     private bool isLeader = true;
     private bool isUserReady = false;
     private bool hasAttacked = false;
-    private Guid? selectedTarget = null;
+    private int? selectedTarget = null;
     private int starsEarned = 0;
     private int currentRound = 1;
     private int totalRounds = 3;
@@ -336,7 +336,7 @@
     private GroupInfo? opponentGroup;
     private BattleMember? mvpPlayer;
     private List<BattleMember> groupMembers = new();
-    private HashSet<Guid> selectedParticipantIds = new();
+    private HashSet<int> selectedParticipantIds = new();
     private bool isSubmittingBattleRequest = false;
     private bool showMatchRequestMessage = false;
     private string matchRequestMessage = string.Empty;
@@ -352,7 +352,7 @@
     {
         ourGroup = new GroupInfo
         {
-            Id = Guid.NewGuid(),
+            Id = new Random().Next(1, int.MaxValue),
             Name = "نوابغ ایران",
             Logo = "https://api.dicebear.com/7.x/identicon/svg?seed=geniuses",
             MemberCount = 15
@@ -360,11 +360,11 @@
 
         groupMembers = new List<BattleMember>
         {
-            new BattleMember { Id = Guid.NewGuid(), Username = AppState.Username, Avatar = AppState.AvatarUrl ?? "icon-192.png", Level = 29, RoleLabel = "رهبر" },
-            new BattleMember { Id = Guid.NewGuid(), Username = "علی", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=ali", Level = 21, RoleLabel = "دوست" },
-            new BattleMember { Id = Guid.NewGuid(), Username = "سارا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=sara", Level = 18, RoleLabel = "دوست" },
-            new BattleMember { Id = Guid.NewGuid(), Username = "مینا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=mina", Level = 20, RoleLabel = "دوست" },
-            new BattleMember { Id = Guid.NewGuid(), Username = "رضا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=reza", Level = 24, RoleLabel = "دوست" }
+            new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = AppState.Username, Avatar = AppState.AvatarUrl ?? "icon-192.png", Level = 29, RoleLabel = "رهبر" },
+            new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = "علی", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=ali", Level = 21, RoleLabel = "دوست" },
+            new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = "سارا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=sara", Level = 18, RoleLabel = "دوست" },
+            new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = "مینا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=mina", Level = 20, RoleLabel = "دوست" },
+            new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = "رضا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=reza", Level = 24, RoleLabel = "دوست" }
         };
         selectedParticipantIds = groupMembers.Select(m => m.Id).ToHashSet();
 
@@ -378,7 +378,7 @@
     {
         opponentGroup = new GroupInfo
         {
-            Id = Guid.NewGuid(),
+            Id = new Random().Next(1, int.MaxValue),
             Name = "قهرمانان",
             Logo = "https://api.dicebear.com/7.x/identicon/svg?seed=champions",
             MemberCount = 12
@@ -386,20 +386,20 @@
 
         activeBattle = new GroupBattleInfo
         {
-            Id = Guid.NewGuid(),
+            Id = new Random().Next(1, int.MaxValue),
             OurScore = 28,
             OpponentScore = 24,
             OurMembers = new List<BattleMember>
             {
-                new BattleMember { Id = Guid.NewGuid(), Username = AppState.Username, Avatar = AppState.AvatarUrl ?? "icon-192.png", IsReady = true, AttacksUsed = 1, MaxAttacks = 2, StarsEarned = 3 },
-                new BattleMember { Id = Guid.NewGuid(), Username = "علی", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=ali", IsReady = true, AttacksUsed = 2, MaxAttacks = 2, StarsEarned = 5 },
-                new BattleMember { Id = Guid.NewGuid(), Username = "سارا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=sara", IsReady = false, AttacksUsed = 0, MaxAttacks = 2, StarsEarned = 0 }
+                new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = AppState.Username, Avatar = AppState.AvatarUrl ?? "icon-192.png", IsReady = true, AttacksUsed = 1, MaxAttacks = 2, StarsEarned = 3 },
+                new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = "علی", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=ali", IsReady = true, AttacksUsed = 2, MaxAttacks = 2, StarsEarned = 5 },
+                new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = "سارا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=sara", IsReady = false, AttacksUsed = 0, MaxAttacks = 2, StarsEarned = 0 }
             },
             OpponentMembers = new List<BattleMember>
             {
-                new BattleMember { Id = Guid.NewGuid(), Username = "رضا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=reza", Level = 15, StarsLost = 2 },
-                new BattleMember { Id = Guid.NewGuid(), Username = "مریم", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=maryam", Level = 12, StarsLost = 3, IsDefeated = true },
-                new BattleMember { Id = Guid.NewGuid(), Username = "حسین", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=hossein", Level = 18, StarsLost = 0 }
+                new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = "رضا", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=reza", Level = 15, StarsLost = 2 },
+                new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = "مریم", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=maryam", Level = 12, StarsLost = 3, IsDefeated = true },
+                new BattleMember { Id = new Random().Next(1, int.MaxValue), Username = "حسین", Avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=hossein", Level = 18, StarsLost = 0 }
             }
         };
         battleQuestion = CreateBattleQuestion();
@@ -422,7 +422,7 @@
         if (me != null) me.IsReady = true;
     }
 
-    private void ToggleParticipant(Guid userId)
+    private void ToggleParticipant(int userId)
     {
         if (selectedParticipantIds.Contains(userId))
             selectedParticipantIds.Remove(userId);
@@ -430,7 +430,7 @@
             selectedParticipantIds.Add(userId);
     }
 
-    private void SelectTarget(Guid targetId)
+    private void SelectTarget(int targetId)
     {
         selectedTarget = targetId;
     }
@@ -452,7 +452,7 @@
         try
         {
             var createDto = new CreateGroupBattleDto(
-                ourGroup?.Id ?? Guid.Empty,
+                ourGroup?.Id ?? 0,
                 AppState.CurrentUserId,
                 selectedParticipantIds.ToList()
             );
@@ -466,7 +466,7 @@
                     activeBattle = MapBattleFromDto(result);
                     opponentGroup = new GroupInfo
                     {
-                        Id = result.Group2Id ?? Guid.NewGuid(),
+                        Id = result.Group2Id ?? new Random().Next(1, int.MaxValue),
                         Name = result.Group2Name ?? "گروه حریف",
                         Logo = result.Group2LogoUrl ?? "https://api.dicebear.com/7.x/identicon/svg?seed=opponent",
                         MemberCount = result.PlayersPerTeam
@@ -562,7 +562,7 @@
 
     private BattleQuestion CreateBattleQuestion() => new BattleQuestion
     {
-        Id = Guid.NewGuid(),
+        Id = new Random().Next(1, int.MaxValue),
         Text = "سوال نبرد: این سوال نشان دهنده چالش حمله است. لطفاً نظر خود را با انتخاب یکی از واکنش‌ها ثبت کنید."
     };
 
@@ -608,7 +608,7 @@
 
     private class GroupInfo
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Logo { get; set; } = string.Empty;
         public int MemberCount { get; set; }
@@ -616,7 +616,7 @@
 
     private class GroupBattleInfo
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public int OurScore { get; set; }
         public int OpponentScore { get; set; }
         public List<BattleMember> OurMembers { get; set; } = new();
@@ -625,7 +625,7 @@
 
     private class BattleMember
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Avatar { get; set; } = string.Empty;
         public int Level { get; set; }
@@ -649,7 +649,7 @@
 
     private class BattleQuestion
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public string Text { get; set; } = string.Empty;
     }
 }

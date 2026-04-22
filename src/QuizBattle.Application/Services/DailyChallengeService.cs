@@ -15,7 +15,7 @@ public class DailyChallengeService : IDailyChallengeService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<DailyChallengeDto?> GetTodayChallengeAsync(Guid? userId = null)
+    public async Task<DailyChallengeDto?> GetTodayChallengeAsync(int? userId = null)
     {
         var today = DateTime.UtcNow.Date;
         var challenge = await _unitOfWork.Repository<DailyChallenge>()
@@ -52,7 +52,7 @@ public class DailyChallengeService : IDailyChallengeService
         );
     }
 
-    public async Task<List<DailyChallengeQuestionDto>> GetChallengeQuestionsAsync(Guid challengeId)
+    public async Task<List<DailyChallengeQuestionDto>> GetChallengeQuestionsAsync(int challengeId)
     {
         var questions = await _unitOfWork.Repository<DailyChallengeQuestion>()
             .Query()
@@ -80,7 +80,7 @@ public class DailyChallengeService : IDailyChallengeService
         )).ToList();
     }
 
-    public async Task<AnswerResultDto> SubmitAnswerAsync(Guid userId, SubmitDailyChallengeAnswerDto dto)
+    public async Task<AnswerResultDto> SubmitAnswerAsync(int userId, SubmitDailyChallengeAnswerDto dto)
     {
         var question = await _unitOfWork.Repository<Question>()
             .Query()
@@ -146,7 +146,7 @@ public class DailyChallengeService : IDailyChallengeService
         return new AnswerResultDto(isCorrect, score, correctAnswer.Id);
     }
 
-    public async Task<DailyChallengeResultDto?> GetUserResultAsync(Guid challengeId, Guid userId)
+    public async Task<DailyChallengeResultDto?> GetUserResultAsync(int challengeId, int userId)
     {
         var result = await _unitOfWork.Repository<DailyChallengeResult>()
             .Query()
@@ -166,7 +166,7 @@ public class DailyChallengeService : IDailyChallengeService
         );
     }
 
-    public async Task<DailyChallengeLeaderboardDto> GetLeaderboardAsync(Guid challengeId, int limit = 100)
+    public async Task<DailyChallengeLeaderboardDto> GetLeaderboardAsync(int challengeId, int limit = 100)
     {
         var results = await _unitOfWork.Repository<DailyChallengeResult>()
             .Query()
@@ -236,7 +236,7 @@ public class DailyChallengeService : IDailyChallengeService
         return true;
     }
 
-    private async Task UpdateRanksAsync(Guid challengeId)
+    private async Task UpdateRanksAsync(int challengeId)
     {
         var results = await _unitOfWork.Repository<DailyChallengeResult>()
             .Query()

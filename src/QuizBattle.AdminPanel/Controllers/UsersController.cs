@@ -67,7 +67,7 @@ public class UsersController : Controller
         return View(viewModel);
     }
 
-    public async Task<IActionResult> Details(Guid id)
+    public async Task<IActionResult> Details(int id)
     {
         var user = await _apiClient.GetUserByIdAsync(id);
         if (user == null)

@@ -4,7 +4,7 @@ namespace QuizBattle.PWA.Services;
 
 public record UserStateData
 {
-    public Guid CurrentUserId { get; set; }
+    public int CurrentUserId { get; set; }
     public string Username { get; set; } = "";
     public string? AvatarUrl { get; set; }
     public bool IsGuest { get; set; }
@@ -38,7 +38,7 @@ public class UserStateService
     {
         var savedState = await _storage.GetAsync<UserStateData>(UserStateKey);
         
-        if (savedState != null && savedState.CurrentUserId != Guid.Empty)
+        if (savedState != null && savedState.CurrentUserId != 0)
         {
             _appState.CurrentUserId = savedState.CurrentUserId;
             _appState.Username = savedState.Username;

@@ -161,8 +161,8 @@
     private int timeLeft = 15;
     private Timer? timer;
     
-    private Guid? selectedAnswer;
-    private Guid? correctAnswerId;
+    private int? selectedAnswer;
+    private int? correctAnswerId;
     private bool hasReactedToCurrentQuestion = false;
     private int? currentQuestionReaction;
     private int totalScore = 0;
@@ -185,7 +185,7 @@
             // Use mock data for demo
             challenge = new DailyChallengeDto
             {
-                Id = Guid.NewGuid(),
+                Id = new Random().Next(1, int.MaxValue),
                 Title = "چالش روزانه",
                 QuestionsCount = 5,
                 ParticipantsCount = 128,
@@ -216,61 +216,61 @@
         {
             new DailyChallengeQuestionDto {
                 Question = new QuestionDto {
-                    Id = Guid.NewGuid(),
+                    Id = new Random().Next(1, int.MaxValue),
                     Text = "پایتخت فرانسه کجاست؟",
                     Answers = new List<AnswerDto> {
-                        new() { Id = Guid.NewGuid(), Text = "لندن" },
-                        new() { Id = Guid.NewGuid(), Text = "پاریس", IsCorrect = true },
-                        new() { Id = Guid.NewGuid(), Text = "برلین" },
-                        new() { Id = Guid.NewGuid(), Text = "رم" }
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "لندن" },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "پاریس", IsCorrect = true },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "برلین" },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "رم" }
                     }
                 }
             },
             new DailyChallengeQuestionDto {
                 Question = new QuestionDto {
-                    Id = Guid.NewGuid(),
+                    Id = new Random().Next(1, int.MaxValue),
                     Text = "کدام سیاره بزرگ‌ترین سیاره منظومه شمسی است؟",
                     Answers = new List<AnswerDto> {
-                        new() { Id = Guid.NewGuid(), Text = "زمین" },
-                        new() { Id = Guid.NewGuid(), Text = "مریخ" },
-                        new() { Id = Guid.NewGuid(), Text = "مشتری", IsCorrect = true },
-                        new() { Id = Guid.NewGuid(), Text = "زحل" }
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "زمین" },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "مریخ" },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "مشتری", IsCorrect = true },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "زحل" }
                     }
                 }
             },
             new DailyChallengeQuestionDto {
                 Question = new QuestionDto {
-                    Id = Guid.NewGuid(),
+                    Id = new Random().Next(1, int.MaxValue),
                     Text = "حاصل ۲۵ + ۳۷ چند است؟",
                     Answers = new List<AnswerDto> {
-                        new() { Id = Guid.NewGuid(), Text = "۵۲" },
-                        new() { Id = Guid.NewGuid(), Text = "۶۲", IsCorrect = true },
-                        new() { Id = Guid.NewGuid(), Text = "۷۲" },
-                        new() { Id = Guid.NewGuid(), Text = "۴۲" }
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "۵۲" },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "۶۲", IsCorrect = true },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "۷۲" },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "۴۲" }
                     }
                 }
             },
             new DailyChallengeQuestionDto {
                 Question = new QuestionDto {
-                    Id = Guid.NewGuid(),
+                    Id = new Random().Next(1, int.MaxValue),
                     Text = "شاعر شاهنامه کیست؟",
                     Answers = new List<AnswerDto> {
-                        new() { Id = Guid.NewGuid(), Text = "حافظ" },
-                        new() { Id = Guid.NewGuid(), Text = "سعدی" },
-                        new() { Id = Guid.NewGuid(), Text = "فردوسی", IsCorrect = true },
-                        new() { Id = Guid.NewGuid(), Text = "مولوی" }
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "حافظ" },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "سعدی" },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "فردوسی", IsCorrect = true },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "مولوی" }
                     }
                 }
             },
             new DailyChallengeQuestionDto {
                 Question = new QuestionDto {
-                    Id = Guid.NewGuid(),
+                    Id = new Random().Next(1, int.MaxValue),
                     Text = "کدام عنصر نماد Au دارد؟",
                     Answers = new List<AnswerDto> {
-                        new() { Id = Guid.NewGuid(), Text = "نقره" },
-                        new() { Id = Guid.NewGuid(), Text = "طلا", IsCorrect = true },
-                        new() { Id = Guid.NewGuid(), Text = "مس" },
-                        new() { Id = Guid.NewGuid(), Text = "آهن" }
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "نقره" },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "طلا", IsCorrect = true },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "مس" },
+                        new() { Id = new Random().Next(1, int.MaxValue), Text = "آهن" }
                     }
                 }
             }
@@ -343,7 +343,7 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private async Task SubmitAnswer(Guid? answerId)
+    private async Task SubmitAnswer(int? answerId)
     {
         if (selectedAnswer != null) return;
         selectedAnswer = answerId;
@@ -401,7 +401,7 @@
         StateHasChanged();
     }
 
-    private string GetAnswerClass(Guid answerId)
+    private string GetAnswerClass(int answerId)
     {
         if (selectedAnswer == null) return "";
         
@@ -484,7 +484,7 @@
             if (rank == myRank)
             {
                 results.Add(new DailyChallengeResultDto(
-                    AppState.CurrentUserId != Guid.Empty ? AppState.CurrentUserId : Guid.NewGuid(),
+                    AppState.CurrentUserId != 0 ? AppState.CurrentUserId : new Random().Next(1, int.MaxValue),
                     AppState.Username ?? "شما",
                     AppState.AvatarUrl ?? "😎",
                     0, 0, myScore, rank
@@ -495,7 +495,7 @@
                 var nameIndex = usedRanks % names.Length;
                 var scoreForRank = Math.Max(10, myScore + (myRank - rank) * random.Next(8, 20));
                 results.Add(new DailyChallengeResultDto(
-                    Guid.NewGuid(),
+                    new Random().Next(1, int.MaxValue),
                     names[nameIndex],
                     avatars[nameIndex % avatars.Length],
                     0, 0, scoreForRank, rank
@@ -532,7 +532,7 @@
 
     public class DailyChallengeDto 
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public string Title { get; set; } = "";
         public DateTime ChallengeDate { get; set; }
         public int QuestionsCount { get; set; }
@@ -550,10 +550,10 @@
 
     public class QuestionDto
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public string Text { get; set; } = "";
         public string? ImageUrl { get; set; }
-        public Guid CategoryId { get; set; }
+        public int CategoryId { get; set; }
         public string CategoryName { get; set; } = "";
         public int Difficulty { get; set; }
         public List<AnswerDto> Answers { get; set; } = new();
@@ -561,18 +561,17 @@
 
     public class AnswerDto
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public int Id { get; set; } = new Random().Next(1, int.MaxValue);
         public string Text { get; set; } = "";
         public int OrderIndex { get; set; }
         public bool IsCorrect { get; set; }
     }
 
-    public record AnswerResultDto(bool IsCorrect, int Score, Guid CorrectAnswerId);
+    public record AnswerResultDto(bool IsCorrect, int Score, int CorrectAnswerId);
 
     public record DailyChallengeLeaderboardDto(List<DailyChallengeResultDto> Results, int TotalParticipants);
 
-    public record DailyChallengeResultDto(
-        Guid UserId, string Username, string AvatarUrl,
+    public record DailyChallengeResultDto(int UserId, string Username, string AvatarUrl,
         int CorrectAnswers, int TotalTimeSpent, int Score, int Rank
     );
 }

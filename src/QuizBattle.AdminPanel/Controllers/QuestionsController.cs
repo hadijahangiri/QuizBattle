@@ -16,7 +16,7 @@ public class QuestionsController : Controller
         _apiClient = apiClient;
     }
 
-    public async Task<IActionResult> Index(int page = 1, Guid? categoryId = null, string? search = null)
+    public async Task<IActionResult> Index(int page = 1, int? categoryId = null, string? search = null)
     {
         const int pageSize = 20;
         var questions = await _apiClient.GetAllQuestionsAsync(page, 100); // Get more for filtering
@@ -118,7 +118,7 @@ public class QuestionsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> Edit(Guid id)
+    public async Task<IActionResult> Edit(int id)
     {
         var question = await _apiClient.GetQuestionByIdAsync(id);
         if (question == null)
@@ -185,7 +185,7 @@ public class QuestionsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(int id)
     {
         var result = await _apiClient.DeleteQuestionAsync(id);
         if (!result)

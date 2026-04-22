@@ -32,8 +32,10 @@ namespace QuizBattle.AdminPanel.Data.Migrations
                         .HasMaxLength(256);
 
                     b.Property<string>("NormalizedName")
-                        .HasColumnType("TEXT")
-                        .HasMaxLength(256);
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -117,7 +119,7 @@ namespace QuizBattle.AdminPanel.Data.Migrations
 
                     b.Property<string>("UserName")
                         .HasColumnType("TEXT")
-                        .HasMaxLength(256);
+                        .HasMaxLength(128);
 
                     b.HasKey("Id");
 

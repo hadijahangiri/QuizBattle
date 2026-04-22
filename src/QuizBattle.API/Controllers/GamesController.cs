@@ -21,7 +21,7 @@ public class GamesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<GameDto>> Create([FromBody] CreateGameDto dto)
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         // فقط کاربر جاری می‌تواند بازی ایجاد کند
         if (dto.ChallengerId != userId)
             return Forbid();
@@ -38,9 +38,9 @@ public class GamesController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<GameDto>> GetById(Guid id)
+    public async Task<ActionResult<GameDto>> GetById(int id)
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         var game = await _gameService.GetByIdAsync(id);
         if (game == null) return NotFound();
         
@@ -54,7 +54,7 @@ public class GamesController : ControllerBase
     [HttpGet("my/active")]
     public async Task<ActionResult<List<GameDto>>> GetMyActiveGames()
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         var games = await _gameService.GetUserActiveGamesAsync(userId);
         return Ok(games);
     }
@@ -62,15 +62,15 @@ public class GamesController : ControllerBase
     [HttpGet("my/history")]
     public async Task<ActionResult<List<GameDto>>> GetMyGameHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         var games = await _gameService.GetUserGameHistoryAsync(userId, page, pageSize);
         return Ok(games);
     }
 
     [HttpGet("{id}/current-round")]
-    public async Task<ActionResult<GameRoundDto>> GetCurrentRound(Guid id)
+    public async Task<ActionResult<GameRoundDto>> GetCurrentRound(int id)
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         
         // بررسی دسترسی به بازی
         var game = await _gameService.GetByIdAsync(id);
@@ -84,9 +84,9 @@ public class GamesController : ControllerBase
     }
 
     [HttpGet("{id}/rounds/{roundNumber}/categories")]
-    public async Task<ActionResult<CategorySuggestionsDto>> GetCategorySuggestions(Guid id, int roundNumber)
+    public async Task<ActionResult<CategorySuggestionsDto>> GetCategorySuggestions(int id, int roundNumber)
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         
         // بررسی دسترسی به بازی
         var game = await _gameService.GetByIdAsync(id);
@@ -99,9 +99,9 @@ public class GamesController : ControllerBase
     }
 
     [HttpPost("{id}/rounds/{roundNumber}/change-categories")]
-    public async Task<ActionResult> ChangeCategorySuggestions(Guid id, int roundNumber)
+    public async Task<ActionResult> ChangeCategorySuggestions(int id, int roundNumber)
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         
         // بررسی دسترسی به بازی
         var game = await _gameService.GetByIdAsync(id);
@@ -117,7 +117,7 @@ public class GamesController : ControllerBase
     [HttpPost("select-category")]
     public async Task<ActionResult<GameRoundDto>> SelectCategory([FromBody] SelectCategoryDto dto)
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         
         // بررسی دسترسی به بازی
         var game = await _gameService.GetByIdAsync(dto.GameId);
@@ -139,7 +139,7 @@ public class GamesController : ControllerBase
     [HttpPost("submit-answer")]
     public async Task<ActionResult<AnswerResultDto>> SubmitAnswer([FromBody] SubmitAnswerDto answer)
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         
         // بررسی دسترسی به بازی
         var game = await _gameService.GetByIdAsync(answer.GameId);
@@ -161,7 +161,7 @@ public class GamesController : ControllerBase
     [HttpGet("my/active-count")]
     public async Task<ActionResult<int>> GetMyActiveGamesCount()
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         var count = await _gameService.GetUserActiveGamesCountAsync(userId);
         return Ok(count);
     }
@@ -171,7 +171,7 @@ public class GamesController : ControllerBase
     [HttpPost("matchmaking/join")]
     public async Task<ActionResult<MatchmakingResultDto>> JoinMatchmaking()
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         var result = await _gameService.JoinMatchmakingQueueAsync(userId);
         return Ok(result);
     }
@@ -179,7 +179,7 @@ public class GamesController : ControllerBase
     [HttpGet("matchmaking/status")]
     public async Task<ActionResult<MatchmakingResultDto>> GetMatchmakingStatus()
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         var result = await _gameService.GetMatchmakingStatusAsync(userId);
         return Ok(result);
     }
@@ -187,7 +187,7 @@ public class GamesController : ControllerBase
     [HttpPost("matchmaking/leave")]
     public async Task<IActionResult> LeaveMatchmaking()
     {
-        var userId = User.GetRequiredUserId();
+        var userId = User.GetCurrentUserId();
         await _gameService.LeaveMatchmakingQueueAsync(userId);
         return Ok();
     }

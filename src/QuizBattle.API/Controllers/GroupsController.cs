@@ -33,7 +33,7 @@ public class GroupsController : ControllerBase
 
     [HttpGet("{id}")]
     [AllowAnonymous]
-    public async Task<ActionResult<GroupDto>> GetById(Guid id)
+    public async Task<ActionResult<GroupDto>> GetById(int id)
     {
         var group = await _groupService.GetByIdAsync(id);
         if (group == null) return NotFound();
@@ -58,21 +58,21 @@ public class GroupsController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
-    public async Task<ActionResult<List<GroupDto>>> GetUserGroups(Guid userId)
+    public async Task<ActionResult<List<GroupDto>>> GetUserGroups(int userId)
     {
         var groups = await _groupService.GetUserGroupsAsync(userId);
         return Ok(groups);
     }
 
     [HttpGet("owned/{userId}")]
-    public async Task<ActionResult<List<GroupDto>>> GetOwnedGroups(Guid userId)
+    public async Task<ActionResult<List<GroupDto>>> GetOwnedGroups(int userId)
     {
         var groups = await _groupService.GetOwnedGroupsAsync(userId);
         return Ok(groups);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<GroupDto>> Update(Guid id, [FromBody] UpdateGroupRequest request)
+    public async Task<ActionResult<GroupDto>> Update(int id, [FromBody] UpdateGroupRequest request)
     {
         try
         {
@@ -86,7 +86,7 @@ public class GroupsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id, [FromQuery] Guid userId)
+    public async Task<IActionResult> Delete(int id, [FromQuery] int userId)
     {
         var result = await _groupService.DeleteAsync(id, userId);
         if (!result) return BadRequest("فقط مالک می‌تواند گروه را حذف کند");
@@ -95,14 +95,14 @@ public class GroupsController : ControllerBase
 
     // Members
     [HttpGet("{id}/members")]
-    public async Task<ActionResult<List<GroupMemberDto>>> GetMembers(Guid id)
+    public async Task<ActionResult<List<GroupMemberDto>>> GetMembers(int id)
     {
         var members = await _groupService.GetMembersAsync(id);
         return Ok(members);
     }
 
     [HttpPost("{id}/request-membership")]
-    public async Task<IActionResult> RequestMembership(Guid id, [FromBody] MembershipRequest request)
+    public async Task<IActionResult> RequestMembership(int id, [FromBody] MembershipRequest request)
     {
         try
         {
@@ -116,7 +116,7 @@ public class GroupsController : ControllerBase
     }
 
     [HttpGet("{id}/membership-requests")]
-    public async Task<ActionResult<List<MembershipRequestDto>>> GetMembershipRequests(Guid id, [FromQuery] Guid userId)
+    public async Task<ActionResult<List<MembershipRequestDto>>> GetMembershipRequests(int id, [FromQuery] int userId)
     {
         try
         {
@@ -130,7 +130,7 @@ public class GroupsController : ControllerBase
     }
 
     [HttpPost("membership-requests/{requestId}/approve")]
-    public async Task<IActionResult> ApproveMembership(Guid requestId, [FromQuery] Guid approverId)
+    public async Task<IActionResult> ApproveMembership(int requestId, [FromQuery] int approverId)
     {
         var result = await _groupService.ApproveMembershipAsync(requestId, approverId);
         if (!result) return BadRequest("خطا در تایید عضویت");
@@ -138,7 +138,7 @@ public class GroupsController : ControllerBase
     }
 
     [HttpPost("membership-requests/{requestId}/reject")]
-    public async Task<IActionResult> RejectMembership(Guid requestId, [FromQuery] Guid approverId)
+    public async Task<IActionResult> RejectMembership(int requestId, [FromQuery] int approverId)
     {
         var result = await _groupService.RejectMembershipAsync(requestId, approverId);
         if (!result) return BadRequest("خطا در رد عضویت");
@@ -146,7 +146,7 @@ public class GroupsController : ControllerBase
     }
 
     [HttpPost("{id}/kick/{memberId}")]
-    public async Task<IActionResult> KickMember(Guid id, Guid memberId, [FromQuery] Guid kickerId)
+    public async Task<IActionResult> KickMember(int id, int memberId, [FromQuery] int kickerId)
     {
         var result = await _groupService.KickMemberAsync(id, memberId, kickerId);
         if (!result) return BadRequest("خطا در اخراج عضو");
@@ -154,7 +154,7 @@ public class GroupsController : ControllerBase
     }
 
     [HttpPost("{id}/leave")]
-    public async Task<IActionResult> LeaveGroup(Guid id, [FromQuery] Guid userId)
+    public async Task<IActionResult> LeaveGroup(int id, [FromQuery] int userId)
     {
         try
         {
@@ -169,7 +169,7 @@ public class GroupsController : ControllerBase
     }
 
     [HttpPost("{id}/promote/{memberId}")]
-    public async Task<IActionResult> PromoteMember(Guid id, Guid memberId, [FromBody] PromoteRequest request)
+    public async Task<IActionResult> PromoteMember(int id, int memberId, [FromBody] PromoteRequest request)
     {
         var result = await _groupService.PromoteMemberAsync(id, memberId, request.PromoterId, request.NewRole);
         if (!result) return BadRequest("خطا در ارتقا عضو");
@@ -178,7 +178,7 @@ public class GroupsController : ControllerBase
 
     // Chat
     [HttpGet("{id}/chat")]
-    public async Task<ActionResult<List<GroupChatMessageDto>>> GetChatMessages(Guid id, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+    public async Task<ActionResult<List<GroupChatMessageDto>>> GetChatMessages(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
     {
         var messages = await _groupService.GetChatMessagesAsync(id, page, pageSize);
         return Ok(messages);
@@ -199,7 +199,7 @@ public class GroupsController : ControllerBase
     }
 
     [HttpDelete("chat/{messageId}")]
-    public async Task<IActionResult> DeleteMessage(Guid messageId, [FromQuery] Guid userId)
+    public async Task<IActionResult> DeleteMessage(int messageId, [FromQuery] int userId)
     {
         var result = await _groupService.DeleteMessageAsync(messageId, userId);
         if (!result) return BadRequest("خطا در حذف پیام");
@@ -207,7 +207,7 @@ public class GroupsController : ControllerBase
     }
 
     [HttpPost("{id}/toggle-chat")]
-    public async Task<IActionResult> ToggleChat(Guid id, [FromBody] ToggleChatRequest request)
+    public async Task<IActionResult> ToggleChat(int id, [FromBody] ToggleChatRequest request)
     {
         var result = await _groupService.ToggleChatAsync(id, request.UserId, request.Enabled);
         if (!result) return BadRequest("فقط مالک می‌تواند چت را تغییر دهد");
@@ -215,9 +215,9 @@ public class GroupsController : ControllerBase
     }
 }
 
-public record CreateGroupRequest(Guid OwnerId, CreateGroupDto Data);
-public record UpdateGroupRequest(Guid UserId, UpdateGroupDto Data);
-public record MembershipRequest(Guid UserId, string? Message);
-public record PromoteRequest(Guid PromoterId, GroupRole NewRole);
-public record SendGroupChatRequest(Guid UserId, SendGroupChatDto Data);
-public record ToggleChatRequest(Guid UserId, bool Enabled);
+public record CreateGroupRequest(int OwnerId, CreateGroupDto Data);
+public record UpdateGroupRequest(int UserId, UpdateGroupDto Data);
+public record MembershipRequest(int UserId, string? Message);
+public record PromoteRequest(int PromoterId, GroupRole NewRole);
+public record SendGroupChatRequest(int UserId, SendGroupChatDto Data);
+public record ToggleChatRequest(int UserId, bool Enabled);

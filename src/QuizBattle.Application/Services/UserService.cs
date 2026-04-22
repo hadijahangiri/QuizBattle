@@ -15,7 +15,7 @@ public class UserService : IUserService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<UserDto?> GetByIdAsync(Guid id)
+    public async Task<UserDto?> GetByIdAsync(int id)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(id);
         return user == null ? null : MapToDto(user);
@@ -73,7 +73,7 @@ public class UserService : IUserService
         return MapToDto(user);
     }
 
-    public async Task<UserDto> UpdateAsync(Guid id, UpdateUserDto dto)
+    public async Task<UserDto> UpdateAsync(int id, UpdateUserDto dto)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(id);
         if (user == null)
@@ -95,7 +95,7 @@ public class UserService : IUserService
         return MapToDto(user);
     }
 
-    public async Task<UserDto> ConvertGuestToRegularAsync(Guid id, string? email, string? phone)
+    public async Task<UserDto> ConvertGuestToRegularAsync(int id, string? email, string? phone)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(id);
         if (user == null)
@@ -118,7 +118,7 @@ public class UserService : IUserService
         return MapToDto(user);
     }
 
-    public async Task<bool> UpdateCoinsAsync(Guid id, int amount)
+    public async Task<bool> UpdateCoinsAsync(int id, int amount)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(id);
         if (user == null) return false;
@@ -133,7 +133,7 @@ public class UserService : IUserService
         return true;
     }
 
-    public async Task<bool> AddScoreAsync(Guid id, int score)
+    public async Task<bool> AddScoreAsync(int id, int score)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(id);
         if (user == null) return false;
@@ -148,7 +148,7 @@ public class UserService : IUserService
         return true;
     }
 
-    public async Task<UserProfileDto?> GetProfileAsync(Guid id)
+    public async Task<UserProfileDto?> GetProfileAsync(int id)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(id);
         if (user == null) return null;
@@ -193,13 +193,13 @@ public class UserService : IUserService
         }).ToList();
     }
 
-    public async Task<bool> HasCompletedTutorialAsync(Guid id)
+    public async Task<bool> HasCompletedTutorialAsync(int id)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(id);
         return user?.HasCompletedTutorial ?? false;
     }
 
-    public async Task MarkTutorialCompletedAsync(Guid id)
+    public async Task MarkTutorialCompletedAsync(int id)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(id);
         if (user != null)
@@ -211,7 +211,7 @@ public class UserService : IUserService
         }
     }
 
-    public async Task UpdateDeviceTokenAsync(Guid id, string deviceToken)
+    public async Task UpdateDeviceTokenAsync(int id, string deviceToken)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(id);
         if (user != null)

@@ -21,7 +21,7 @@ public class DashboardViewModel
 
 public class RecentGameViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string Player1Name { get; set; } = "";
     public string Player2Name { get; set; } = "";
     public int Player1Score { get; set; }
@@ -32,7 +32,7 @@ public class RecentGameViewModel
 
 public class TopUserViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string Username { get; set; } = "";
     public string AvatarUrl { get; set; } = "";
     public int TotalWins { get; set; }
@@ -47,17 +47,17 @@ public class QuestionListViewModel
     public int CurrentPage { get; set; }
     public int TotalPages { get; set; }
     public int TotalCount { get; set; }
-    public Guid? CategoryFilter { get; set; }
+    public int? CategoryFilter { get; set; }
     public string? SearchTerm { get; set; }
 }
 
 public class QuestionViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string Text { get; set; } = "";
     public string? ImageUrl { get; set; }
     public string CategoryName { get; set; } = "";
-    public Guid CategoryId { get; set; }
+    public int CategoryId { get; set; }
     public string CorrectAnswer { get; set; } = "";
     public List<string> Options { get; set; } = new();
     public int TimesUsed { get; set; }
@@ -79,7 +79,7 @@ public class CreateQuestionViewModel
 
     [Required(ErrorMessage = "دسته‌بندی الزامی است")]
     [Display(Name = "دسته‌بندی")]
-    public Guid CategoryId { get; set; }
+    public int CategoryId { get; set; }
 
     [Required(ErrorMessage = "گزینه اول الزامی است")]
     [Display(Name = "گزینه ۱")]
@@ -107,7 +107,7 @@ public class CreateQuestionViewModel
 
 public class EditQuestionViewModel : CreateQuestionViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public bool IsActive { get; set; } = true;
 }
 
@@ -119,7 +119,7 @@ public class CategoryListViewModel
 
 public class CategoryViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string Name { get; set; } = "";
     public string? IconUrl { get; set; }
     public int QuestionCount { get; set; }
@@ -143,7 +143,7 @@ public class CreateCategoryViewModel
 
 public class EditCategoryViewModel : CreateCategoryViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public bool IsActive { get; set; } = true;
 }
 
@@ -155,7 +155,7 @@ public class DailyRewardListViewModel
 
 public class DailyRewardAdminViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public int Day { get; set; }
     public int CoinReward { get; set; }
     public string? SpecialReward { get; set; }
@@ -164,7 +164,7 @@ public class DailyRewardAdminViewModel
 
 public class EditDailyRewardViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
 
     [Required(ErrorMessage = "روز الزامی است")]
     [Range(1, 20, ErrorMessage = "روز باید بین 1 تا 20 باشد")]
@@ -194,7 +194,7 @@ public class UserListViewModel
 
 public class UserViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string Username { get; set; } = "";
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
@@ -212,7 +212,7 @@ public class UserViewModel
 
 public class EditUserViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
 
     [Required(ErrorMessage = "نام کاربری الزامی است")]
     [Display(Name = "نام کاربری")]
@@ -242,8 +242,8 @@ public class ReportedQuestionListViewModel
 
 public class ReportedQuestionViewModel
 {
-    public Guid ReportId { get; set; }
-    public Guid QuestionId { get; set; }
+    public int ReportId { get; set; }
+    public int QuestionId { get; set; }
     public string QuestionText { get; set; } = "";
     public string CategoryName { get; set; } = "";
     public string ReporterUsername { get; set; } = "";
@@ -255,14 +255,14 @@ public class ReportedQuestionViewModel
 // Common
 public class CategorySelectItem
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string Name { get; set; } = "";
 }
 
 // Daily Challenge
 public class DailyChallengeViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public DateTime Date { get; set; }
     public int ParticipantsCount { get; set; }
     public int TotalQuestions { get; set; }
@@ -272,7 +272,7 @@ public class DailyChallengeViewModel
 
 public class DailyChallengeQuestionViewModel
 {
-    public Guid QuestionId { get; set; }
+    public int QuestionId { get; set; }
     public string QuestionText { get; set; } = "";
     public int OrderIndex { get; set; }
 }
@@ -299,7 +299,7 @@ public class GroupBattleListViewModel
 
 public class GroupBattleViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string Group1Name { get; set; } = "";
     public string Group2Name { get; set; } = "";
     public int Group1Score { get; set; }
@@ -317,7 +317,7 @@ public class StoreListViewModel
 
 public class StoreItemViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
     public string Name { get; set; } = "";
     public string? Description { get; set; }
     public int CoinAmount { get; set; }
@@ -365,5 +365,5 @@ public class CreateStoreItemViewModel
 
 public class EditStoreItemViewModel : CreateStoreItemViewModel
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
 }

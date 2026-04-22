@@ -7,7 +7,7 @@ public class Question : BaseEntity
 {
     public string Text { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
-    public Guid CategoryId { get; set; }
+    public int CategoryId { get; set; }
     public int Difficulty { get; set; } = 1; // 1-5
     
     // گزینه‌ها (برای سادگی مدیریت در پنل ادمین)
@@ -41,7 +41,7 @@ public class Answer : BaseEntity
 {
     public string Text { get; set; } = string.Empty;
     public bool IsCorrect { get; set; } = false;
-    public Guid QuestionId { get; set; }
+    public int QuestionId { get; set; }
     public int OrderIndex { get; set; } = 0;
     
     // روابط

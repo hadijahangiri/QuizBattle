@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IGroupService, GroupService>();
         services.AddScoped<IGroupBattleService, GroupBattleService>();
         services.AddScoped<IStoreService, StoreService>();
+        services.AddSingleton<IMatchmakingStore, InMemoryMatchmakingStore>();
 
         return services;
     }

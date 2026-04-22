@@ -5,7 +5,7 @@ namespace QuizBattle.Application.DTOs;
 #region User DTOs
 
 public record UserDto(
-    Guid Id,
+    int Id,
     string Username,
     string? Email,
     string? PhoneNumber,
@@ -38,7 +38,7 @@ public record UpdateUserDto(
 );
 
 public record UserProfileDto(
-    Guid Id,
+    int Id,
     string Username,
     string AvatarUrl,
     int Score,
@@ -65,7 +65,7 @@ public record RegisterDto(
 #region Category DTOs
 
 public record CategoryDto(
-    Guid Id,
+    int Id,
     string Name,
     string? Description,
     string? IconUrl,
@@ -83,21 +83,18 @@ public record CreateCategoryDto(
 #region Question DTOs
 
 public record QuestionDto(
-    Guid Id,
+    int Id,
     string Text,
-    string? ImageUrl,
-    Guid CategoryId,
+    string? ImageUrl, int CategoryId,
     string CategoryName,
     int Difficulty,
-    List<AnswerDto> Answers,
-    Guid CorrectAnswerId
+    List<AnswerDto> Answers, int CorrectAnswerId
 );
 
 public record QuestionWithCorrectAnswerDto(
-    Guid Id,
+    int Id,
     string Text,
-    string? ImageUrl,
-    Guid CategoryId,
+    string? ImageUrl, int CategoryId,
     string CategoryName,
     int Difficulty,
     string Option1,
@@ -108,21 +105,20 @@ public record QuestionWithCorrectAnswerDto(
 );
 
 public record AnswerDto(
-    Guid Id,
+    int Id,
     string Text,
     int OrderIndex
 );
 
 public record AnswerWithCorrectDto(
-    Guid Id,
+    int Id,
     string Text,
     bool IsCorrect,
     int OrderIndex
 );
 
 public record CreateQuestionDto(
-    string Text,
-    Guid CategoryId,
+    string Text, int CategoryId,
     int Difficulty,
     string? ImageUrl,
     List<CreateAnswerDto> Answers
@@ -134,13 +130,13 @@ public record CreateAnswerDto(
 );
 
 public record QuestionReactionDto(
-    Guid QuestionId,
+    int QuestionId,
     QuestionReaction Reaction,
     string? ReportReason = null
 );
 
 public record ReportedQuestionDto(
-    Guid Id,
+    int Id,
     string Text,
     string CategoryName,
     int ReportsCount,
@@ -148,7 +144,7 @@ public record ReportedQuestionDto(
 );
 
 public record ReportDetailDto(
-    Guid UserId,
+    int UserId,
     string Username,
     string? Reason,
     DateTime ReportedAt
@@ -159,31 +155,27 @@ public record ReportDetailDto(
 #region Game DTOs
 
 public record GameDto(
-    Guid Id,
-    Guid Player1Id,
+    int Id, int Player1Id,
     string Player1Username,
-    string Player1AvatarUrl,
-    Guid Player2Id,
+    string Player1AvatarUrl, int Player2Id,
     string Player2Username,
     string Player2AvatarUrl,
     int Player1Score,
     int Player2Score,
     int CurrentRound,
-    GameStatus Status,
-    Guid? WinnerId,
+    GameStatus Status, int? WinnerId,
+    int TimeoutHours,
     DateTime CreatedAt,
     DateTime LastActivityAt
 );
 
 public record CreateGameDto(
-    Guid ChallengerId,
-    Guid OpponentId
+    int ChallengerId, int OpponentId
 );
 
 public record GameRoundDto(
-    Guid Id,
-    int RoundNumber,
-    Guid CategoryId,
+    int Id,
+    int RoundNumber, int CategoryId,
     string CategoryName,
     RoundStatus Status,
     int Player1Score,
@@ -193,8 +185,7 @@ public record GameRoundDto(
 );
 
 public record RoundQuestionDto(
-    Guid Id,
-    Guid QuestionId,
+    int Id, int QuestionId,
     QuestionDto Question,
     int QuestionOrder,
     bool? Player1IsCorrect,
@@ -205,23 +196,19 @@ public record RoundQuestionDto(
 );
 
 public record SubmitAnswerDto(
-    Guid GameId,
-    Guid RoundQuestionId,
-    Guid? AnswerId,
+    int GameId, int RoundQuestionId, int? AnswerId,
     int TimeSpent,
     HelperType? HelperUsed = null
 );
 
 public record AnswerResultDto(
     bool IsCorrect,
-    int Score,
-    Guid CorrectAnswerId
+    int Score, int CorrectAnswerId
 );
 
 public record SelectCategoryDto(
-    Guid GameId,
-    int RoundNumber,
-    Guid CategoryId
+    int GameId,
+    int RoundNumber, int CategoryId
 );
 
 public record CategorySuggestionsDto(
@@ -229,9 +216,14 @@ public record CategorySuggestionsDto(
     int ChangeCost
 );
 
+public record MatchInfoDto(
+    int GameId, int OpponentId,
+    string OpponentUsername,
+    string OpponentAvatarUrl
+);
+
 public record MatchmakingResultDto(
-    bool IsMatched,
-    Guid? GameId,
+    bool IsMatched, int? GameId,
     string? OpponentUsername,
     string? OpponentAvatarUrl,
     bool InQueue
@@ -242,7 +234,7 @@ public record MatchmakingResultDto(
 #region Daily Challenge DTOs
 
 public record DailyChallengeDto(
-    Guid Id,
+    int Id,
     DateTime ChallengeDate,
     int QuestionsCount,
     int ParticipantsCount,
@@ -257,14 +249,12 @@ public record DailyChallengeQuestionDto(
 );
 
 public record SubmitDailyChallengeAnswerDto(
-    Guid DailyChallengeId,
-    Guid QuestionId,
-    Guid AnswerId,
+    int DailyChallengeId, int QuestionId, int AnswerId,
     int TimeSpent
 );
 
 public record DailyChallengeResultDto(
-    Guid UserId,
+    int UserId,
     string Username,
     string AvatarUrl,
     int CorrectAnswers,
@@ -283,12 +273,11 @@ public record DailyChallengeLeaderboardDto(
 #region Group DTOs
 
 public record GroupDto(
-    Guid Id,
+    int Id,
     string Name,
     string? Description,
     string? LogoUrl,
-    string UniqueCode,
-    Guid OwnerId,
+    string UniqueCode, int OwnerId,
     string OwnerUsername,
     int TotalScore,
     int MembersCount,
@@ -316,8 +305,7 @@ public record UpdateGroupDto(
 );
 
 public record GroupMemberDto(
-    Guid Id,
-    Guid UserId,
+    int Id, int UserId,
     string Username,
     string AvatarUrl,
     GroupRole Role,
@@ -326,8 +314,7 @@ public record GroupMemberDto(
 );
 
 public record MembershipRequestDto(
-    Guid Id,
-    Guid UserId,
+    int Id, int UserId,
     string Username,
     string AvatarUrl,
     UserLevel Level,
@@ -336,8 +323,7 @@ public record MembershipRequestDto(
 );
 
 public record GroupChatMessageDto(
-    Guid Id,
-    Guid SenderId,
+    int Id, int SenderId,
     string SenderUsername,
     string SenderAvatarUrl,
     string Message,
@@ -345,7 +331,7 @@ public record GroupChatMessageDto(
 );
 
 public record SendGroupChatDto(
-    Guid GroupId,
+    int GroupId,
     string Message
 );
 
@@ -361,31 +347,27 @@ public record GroupSearchDto(
 #region Group Battle DTOs
 
 public record GroupBattleDto(
-    Guid Id,
-    Guid Group1Id,
+    int Id, int Group1Id,
     string Group1Name,
-    string? Group1LogoUrl,
-    Guid? Group2Id,
+    string? Group1LogoUrl, int? Group2Id,
     string? Group2Name,
     string? Group2LogoUrl,
     int Group1Score,
     int Group2Score,
     int PlayersPerTeam,
-    GroupBattleStatus Status,
-    Guid? WinnerGroupId,
+    GroupBattleStatus Status, int? WinnerGroupId,
     DateTime? ExpiresAt,
     List<GroupBattlePlayerDto> Players,
     List<GroupBattleMatchDto> Matches
 );
 
 public record CreateGroupBattleDto(
-    Guid GroupId,
-    Guid RequesterId,
-    List<Guid> PlayerIds
+    int GroupId, int RequesterId,
+    List<int> PlayerIds
 );
 
 public record GroupBattlePlayerDto(
-    Guid UserId,
+    int UserId,
     string Username,
     string AvatarUrl,
     UserLevel Level,
@@ -395,7 +377,7 @@ public record GroupBattlePlayerDto(
 );
 
 public record GroupBattleMatchDto(
-    Guid Id,
+    int Id,
     int MatchOrder,
     string Player1Username,
     string Player2Username,
@@ -409,7 +391,7 @@ public record GroupBattleMatchDto(
 #region Store DTOs
 
 public record StoreItemDto(
-    Guid Id,
+    int Id,
     string Name,
     string? Description,
     int CoinAmount,
@@ -420,7 +402,7 @@ public record StoreItemDto(
 );
 
 public record PurchaseRequestDto(
-    Guid StoreItemId
+    int StoreItemId
 );
 
 public record PurchaseResultDto(
@@ -431,13 +413,13 @@ public record PurchaseResultDto(
 );
 
 public record GiftCoinsDto(
-    Guid ReceiverId,
+    int ReceiverId,
     int CoinAmount,
     string? Message = null
 );
 
 public record TransactionDto(
-    Guid Id,
+    int Id,
     TransactionType Type,
     int CoinAmount,
     decimal? PriceInToman,
@@ -487,7 +469,7 @@ public record ClaimDailyRewardResultDto(
 #region Avatar DTOs
 
 public record AvatarDto(
-    Guid Id,
+    int Id,
     string Name,
     string ImageUrl,
     bool IsDefault,
@@ -515,7 +497,7 @@ public record ApiResponseDto<T>(
 );
 
 public record NotificationDto(
-    Guid Id,
+    int Id,
     string Title,
     string Message,
     string? ImageUrl,

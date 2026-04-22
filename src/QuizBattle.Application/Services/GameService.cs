@@ -11,16 +11,23 @@ public class GameService : IGameService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICategoryService _categoryService;
     private readonly IGameSettingsService _gameSettingsService;
+    private readonly IMatchmakingStore _matchmakingStore;
     private const int MaxActiveGames = 10;
     private const int RoundsPerGame = 6;
     private const int QuestionsPerRound = 3;
     private const int CategoryChangeCost = 10;
+    private static readonly TimeSpan MatchmakingQueueExpiration = TimeSpan.FromMinutes(2);
 
-    public GameService(IUnitOfWork unitOfWork, ICategoryService categoryService, IGameSettingsService gameSettingsService)
+    public GameService(
+        IUnitOfWork unitOfWork,
+        ICategoryService categoryService,
+        IGameSettingsService gameSettingsService,
+        IMatchmakingStore matchmakingStore)
     {
         _unitOfWork = unitOfWork;
         _categoryService = categoryService;
         _gameSettingsService = gameSettingsService;
+        _matchmakingStore = matchmakingStore;
     }
 
     public async Task<GameDto> CreateGameAsync(CreateGameDto dto)
@@ -44,7 +51,7 @@ public class GameService : IGameService
         return await GetByIdAsync(game.Id) ?? throw new Exception("خطا در ایجاد بازی");
     }
 
-    public async Task<GameDto?> GetByIdAsync(Guid gameId)
+    public async Task<GameDto?> GetByIdAsync(int gameId)
     {
         var game = await _unitOfWork.Repository<Game>()
             .Query()
@@ -53,10 +60,13 @@ public class GameService : IGameService
             .Include(g => g.Winner)
             .FirstOrDefaultAsync(g => g.Id == gameId);
 
-        return game == null ? null : MapToDto(game);
+        if (game == null) return null;
+
+        var settings = await _gameSettingsService.GetSettingsAsync();
+        return MapToDto(game, settings.OpponentResponseTimeoutHours);
     }
 
-    public async Task<List<GameDto>> GetUserActiveGamesAsync(Guid userId)
+    public async Task<List<GameDto>> GetUserActiveGamesAsync(int userId)
     {
         var games = await _unitOfWork.Repository<Game>()
             .Query()
@@ -67,10 +77,11 @@ public class GameService : IGameService
             .OrderByDescending(g => g.LastActivityAt)
             .ToListAsync();
 
-        return games.Select(MapToDto).ToList();
+        var settings = await _gameSettingsService.GetSettingsAsync();
+        return games.Select(g => MapToDto(g, settings.OpponentResponseTimeoutHours)).ToList();
     }
 
-    public async Task<List<GameDto>> GetUserGameHistoryAsync(Guid userId, int page = 1, int pageSize = 20)
+    public async Task<List<GameDto>> GetUserGameHistoryAsync(int userId, int page = 1, int pageSize = 20)
     {
         var games = await _unitOfWork.Repository<Game>()
             .Query()
@@ -83,10 +94,11 @@ public class GameService : IGameService
             .Take(pageSize)
             .ToListAsync();
 
-        return games.Select(MapToDto).ToList();
+        var settings = await _gameSettingsService.GetSettingsAsync();
+        return games.Select(g => MapToDto(g, settings.OpponentResponseTimeoutHours)).ToList();
     }
 
-    public async Task<GameRoundDto?> GetCurrentRoundAsync(Guid gameId, Guid? userId = null)
+    public async Task<GameRoundDto?> GetCurrentRoundAsync(int gameId, int? userId = null)
     {
         var game = await _unitOfWork.Repository<Game>().GetByIdAsync(gameId);
         if (game == null) return null;
@@ -111,13 +123,13 @@ public class GameService : IGameService
         return MapToCurrentQuestionRoundDto(round, currentPlayerIsPlayer1);
     }
 
-    public async Task<CategorySuggestionsDto> GetCategorySuggestionsAsync(Guid gameId, int roundNumber)
+    public async Task<CategorySuggestionsDto> GetCategorySuggestionsAsync(int gameId, int roundNumber)
     {
         var categories = await _categoryService.GetRandomCategoriesAsync(4);
         return new CategorySuggestionsDto(categories, CategoryChangeCost);
     }
 
-    public async Task<bool> ChangeCategorySuggestionsAsync(Guid gameId, int roundNumber)
+    public async Task<bool> ChangeCategorySuggestionsAsync(int gameId, int roundNumber)
     {
         var game = await _unitOfWork.Repository<Game>()
             .Query()
@@ -209,7 +221,7 @@ public class GameService : IGameService
         return MapToCurrentQuestionRoundDto(createdRound!, currentPlayerIsPlayer1);
     }
 
-    public async Task<AnswerResultDto> SubmitAnswerAsync(Guid userId, SubmitAnswerDto dto)
+    public async Task<AnswerResultDto> SubmitAnswerAsync(int userId, SubmitAnswerDto dto)
     {
         var game = await _unitOfWork.Repository<Game>()
             .Query()
@@ -290,7 +302,7 @@ public class GameService : IGameService
         return new AnswerResultDto(isCorrect, score, correctAnswer.Id);
     }
 
-    private async Task CheckAndUpdateRoundStatusAsync(Guid roundId, bool isPlayer1)
+    private async Task CheckAndUpdateRoundStatusAsync(int roundId, bool isPlayer1)
     {
         var allQuestions = await _unitOfWork.Repository<RoundQuestion>()
             .Query()
@@ -353,14 +365,14 @@ public class GameService : IGameService
         return expiredGames.Any();
     }
 
-    public async Task<int> GetUserActiveGamesCountAsync(Guid userId)
+    public async Task<int> GetUserActiveGamesCountAsync(int userId)
     {
         return await _unitOfWork.Repository<Game>()
             .CountAsync(g => (g.Player1Id == userId || g.Player2Id == userId) &&
                             g.Status != GameStatus.Completed && g.Status != GameStatus.Cancelled);
     }
 
-    private async Task UseHelper(Guid gameId, Guid userId, HelperType helperType, Guid roundQuestionId)
+    private async Task UseHelper(int gameId, int userId, HelperType helperType, int roundQuestionId)
     {
         var coinCost = helperType switch
         {
@@ -388,7 +400,7 @@ public class GameService : IGameService
         }
     }
 
-    private async Task UpdateGameScoresAsync(Game game, Guid roundId)
+    private async Task UpdateGameScoresAsync(Game game, int roundId)
     {
         var roundQuestions = await _unitOfWork.Repository<RoundQuestion>()
             .Query()
@@ -431,7 +443,7 @@ public class GameService : IGameService
         return (int)(10 + (maxScore - 10) * timeRatio);
     }
 
-    private static GameDto MapToDto(Game game) => new(
+    private static GameDto MapToDto(Game game, int timeoutHours) => new(
         game.Id,
         game.Player1Id,
         game.Player1.Username,
@@ -444,6 +456,7 @@ public class GameService : IGameService
         game.CurrentRound,
         game.Status,
         game.WinnerId,
+        timeoutHours,
         game.CreatedAt,
         game.LastActivityAt
     );
@@ -544,7 +557,7 @@ public class GameService : IGameService
         return Math.Max(0, 15000 - elapsed);
     }
 
-    private async Task<GameRound> EnsureCurrentQuestionStartedAndNotExpiredAsync(Game game, GameRound round, Guid userId)
+    private async Task<GameRound> EnsureCurrentQuestionStartedAndNotExpiredAsync(Game game, GameRound round, int userId)
     {
         var isPlayer1 = game.Player1Id == userId;
         var orderedQuestions = round.Questions.OrderBy(q => q.QuestionOrder).ToList();
@@ -627,7 +640,7 @@ var isCurrentTurnUser = (round.Status == RoundStatus.Player1Turn && isPlayer1)
         }
     }
 
-    private Guid? GetCurrentTurnUserId(Game game, GameRound round)
+    private int? GetCurrentTurnUserId(Game game, GameRound round)
     {
         return round.Status switch
         {
@@ -639,20 +652,19 @@ var isCurrentTurnUser = (round.Status == RoundStatus.Player1Turn && isPlayer1)
 
     #region Matchmaking
 
-    // In-memory matchmaking queue with matched game tracking
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, DateTime> _matchmakingQueue = new();
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, (Guid GameId, string OpponentUsername, string OpponentAvatarUrl)> _matchedPlayers = new();
-
-    public async Task<MatchmakingResultDto> JoinMatchmakingQueueAsync(Guid userId)
+    public async Task<MatchmakingResultDto> JoinMatchmakingQueueAsync(int userId)
     {
+        await _matchmakingStore.RemoveExpiredQueueEntriesAsync(MatchmakingQueueExpiration);
+
         // Check if already matched
-        if (_matchedPlayers.TryGetValue(userId, out var matchInfo))
+        var matchInfo = await _matchmakingStore.GetMatchedPlayerAsync(userId);
+        if (matchInfo != null)
         {
             return new MatchmakingResultDto(true, matchInfo.GameId, matchInfo.OpponentUsername, matchInfo.OpponentAvatarUrl, false);
         }
 
         // Check if already in queue
-        if (_matchmakingQueue.ContainsKey(userId))
+        if (await _matchmakingStore.IsUserInQueueAsync(userId))
         {
             return new MatchmakingResultDto(false, null, null, null, true);
         }
@@ -660,23 +672,18 @@ var isCurrentTurnUser = (round.Status == RoundStatus.Player1Turn && isPlayer1)
         // Ensure user exists in database (create if not)
         var currentUser = await GetOrCreateUserAsync(userId);
 
-        // Try to find an opponent from the queue
-        var potentialOpponents = _matchmakingQueue.Keys.Where(id => id != userId).ToList();
-        
-        if (potentialOpponents.Any())
-        {
-            var opponentId = potentialOpponents.First();
-            
-            // Remove opponent from queue
-            _matchmakingQueue.TryRemove(opponentId, out _);
+        // Try to find an opponent from the distributed queue
+        var opponentId = await _matchmakingStore.GetEarliestOpponentAsync(userId);
 
+        if (opponentId.HasValue)
+        {
             // Get opponent user info (create if not exists)
-            var opponent = await GetOrCreateUserAsync(opponentId);
+            var opponent = await GetOrCreateUserAsync(opponentId.Value);
 
             // Create the game
             var game = new Game
             {
-                Player1Id = opponentId, // The one who was waiting first
+                Player1Id = opponentId.Value, // The one who was waiting first
                 Player2Id = userId,
                 Status = GameStatus.Pending,
                 StartedAt = DateTime.UtcNow
@@ -685,19 +692,21 @@ var isCurrentTurnUser = (round.Status == RoundStatus.Player1Turn && isPlayer1)
             await _unitOfWork.Repository<Game>().AddAsync(game);
             await _unitOfWork.SaveChangesAsync();
 
-            // Store match info for both players
-            _matchedPlayers[userId] = (game.Id, opponent.Username, opponent.AvatarUrl);
-            _matchedPlayers[opponentId] = (game.Id, currentUser.Username, currentUser.AvatarUrl);
+            var userMatchInfo = new MatchInfoDto(game.Id, opponentId.Value, opponent.Username, opponent.AvatarUrl);
+            var opponentMatchInfo = new MatchInfoDto(game.Id, userId, currentUser.Username, currentUser.AvatarUrl);
+
+            await _matchmakingStore.SetMatchedPlayerAsync(userId, userMatchInfo);
+            await _matchmakingStore.SetMatchedPlayerAsync(opponentId.Value, opponentMatchInfo);
 
             return new MatchmakingResultDto(true, game.Id, opponent.Username, opponent.AvatarUrl, false);
         }
 
         // No opponent found, add to queue
-        _matchmakingQueue[userId] = DateTime.UtcNow;
+        await _matchmakingStore.AddToQueueAsync(userId, DateTime.UtcNow);
         return new MatchmakingResultDto(false, null, null, null, true);
     }
 
-    private async Task<User> GetOrCreateUserAsync(Guid userId)
+    private async Task<User> GetOrCreateUserAsync(int userId)
     {
         var user = await _unitOfWork.Repository<User>().GetByIdAsync(userId);
         if (user == null)
@@ -719,24 +728,34 @@ var isCurrentTurnUser = (round.Status == RoundStatus.Player1Turn && isPlayer1)
         return user;
     }
 
-    public Task<MatchmakingResultDto> GetMatchmakingStatusAsync(Guid userId)
+    public async Task<MatchmakingResultDto> GetMatchmakingStatusAsync(int userId)
     {
-        // Check if matched
-        if (_matchedPlayers.TryRemove(userId, out var matchInfo))
+        await _matchmakingStore.RemoveExpiredQueueEntriesAsync(MatchmakingQueueExpiration);
+
+        var matchInfo = await _matchmakingStore.TakeMatchedPlayerAsync(userId);
+        if (matchInfo != null)
         {
-            return Task.FromResult(new MatchmakingResultDto(true, matchInfo.GameId, matchInfo.OpponentUsername, matchInfo.OpponentAvatarUrl, false));
+            return new MatchmakingResultDto(true, matchInfo.GameId, matchInfo.OpponentUsername, matchInfo.OpponentAvatarUrl, false);
         }
 
-        // Check if still in queue
-        var inQueue = _matchmakingQueue.ContainsKey(userId);
-        return Task.FromResult(new MatchmakingResultDto(false, null, null, null, inQueue));
+        var inQueue = await _matchmakingStore.IsUserInQueueAsync(userId);
+        return new MatchmakingResultDto(false, null, null, null, inQueue);
     }
 
-    public Task LeaveMatchmakingQueueAsync(Guid userId)
+    public async Task LeaveMatchmakingQueueAsync(int userId)
     {
-        _matchmakingQueue.TryRemove(userId, out _);
-        _matchedPlayers.TryRemove(userId, out _);
-        return Task.CompletedTask;
+        await _matchmakingStore.RemoveFromQueueAsync(userId);
+
+        var matchInfo = await _matchmakingStore.GetMatchedPlayerAsync(userId);
+        if (matchInfo != null)
+        {
+            await _matchmakingStore.TryRemoveMatchedPlayerAsync(matchInfo.OpponentId);
+            await _matchmakingStore.TryRemoveMatchedPlayerAsync(userId);
+        }
+        else
+        {
+            await _matchmakingStore.TryRemoveMatchedPlayerAsync(userId);
+        }
     }
 
     #endregion

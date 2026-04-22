@@ -16,8 +16,8 @@ public class DailyReward : BaseEntity
 /// </summary>
 public class UserDailyReward : BaseEntity
 {
-    public Guid UserId { get; set; }
-    public Guid DailyRewardId { get; set; }
+    public int UserId { get; set; }
+    public int DailyRewardId { get; set; }
     public DateTime ClaimedAt { get; set; } = DateTime.UtcNow;
     public int CoinsReceived { get; set; }
     
